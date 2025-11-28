@@ -6,6 +6,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use("/api/questions", require("./routes/questions"));
+app.use("/api/auth", require("./routes/auth"));
+
 app.get("/", (req, res) => {
   res.send("Backend server is running...");
 });
