@@ -64,7 +64,7 @@ function Home() {
 
         <p>
           <strong>Phone:</strong>{" "}
-          <a href="tel:9751247267">9751247267</a>
+          <a href="tel:9751247267">+91 9751247267</a>
         </p>
 
         <p className="copy">© 2025 TNPC Study Portal - All Rights Reserved</p>
