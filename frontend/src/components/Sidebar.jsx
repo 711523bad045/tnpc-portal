@@ -1,18 +1,47 @@
-import { Link } from "react-router-dom";
+import React from "react";
+import { NavLink } from "react-router-dom";
+import {
+  Home,
+  ClipboardList,
+  FileQuestion,
+  Video,
+  BookOpen,
+  LogOut,
+} from "lucide-react";
 import "./Sidebar.css";
 
 function Sidebar() {
   return (
     <div className="sidebar">
-      <h2 className="sidebar-title">TNPC Portal</h2>
+      <div className="sidebar-header">TNPC Portal</div>
 
-      <ul className="sidebar-menu">
-        <li><Link to="/dashboard">Dashboard</Link></li>
-        <li><Link to="/daily-test">Daily Test</Link></li>
-        <li><Link to="/qb">Question Bank</Link></li>
-        <li><Link to="/videos">Video Classes</Link></li>
-        <li><Link to="/notes">Study Notes</Link></li>
-      </ul>
+      <nav className="sidebar-menu">
+        <NavLink to="/dashboard" className="menu-item">
+          <Home size={18} /> <span>Dashboard</span>
+        </NavLink>
+
+        <NavLink to="/daily-test" className="menu-item">
+          <ClipboardList size={18} /> <span>Daily Test</span>
+        </NavLink>
+
+        <NavLink to="/question-bank" className="menu-item">
+          <FileQuestion size={18} /> <span>Question Bank</span>
+        </NavLink>
+
+        <NavLink to="/video-classes" className="menu-item">
+          <Video size={18} /> <span>Video Classes</span>
+        </NavLink>
+
+        <NavLink to="/study-notes" className="menu-item">
+          <BookOpen size={18} /> <span>Study Notes</span>
+        </NavLink>
+      </nav>
+
+      <div className="sidebar-footer">
+        <NavLink to="/logout" className="menu-item logout">
+          <LogOut size={18} /> <span>Logout</span>
+        </NavLink>
+      </div>
     </div>
   );
 }
