@@ -176,7 +176,7 @@ function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="dashboard-container">
+      <div className="dashboard-page">
         <div className="loading-container">
           <div className="spinner"></div>
           <p className="loading-text">Loading your progress...</p>
@@ -186,7 +186,7 @@ function Dashboard() {
   }
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-page">
       {/* Header */}
       <div className="dashboard-header">
         <div>

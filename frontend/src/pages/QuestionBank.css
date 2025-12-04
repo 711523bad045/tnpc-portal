@@ -1,0 +1,97 @@
+/* ==========================================
+   PAGE LAYOUT
+   ========================================== */
+
+.dashboard-layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+}
+
+/* Main content (Right side) */
+.dashboard-container {
+  flex: 1;
+  padding: 40px 50px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* ==========================================
+   TITLES
+   ========================================== */
+
+.dashboard-title {
+  font-size: 34px;
+  font-weight: 800;
+  margin-bottom: 5px;
+}
+
+.dashboard-subtitle {
+  font-size: 16px;
+  opacity: 0.85;
+  margin-bottom: 25px;
+}
+
+/* ==========================================
+   UPLOAD CARD
+   ========================================== */
+
+.upload-card {
+  width: 450px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 25px;
+  border-radius: 18px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* File Input Box */
+.file-label {
+  display: block;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.file-label input {
+  margin-top: 10px;
+  width: 100%;
+  color: white;
+}
+
+/* Upload Button */
+.upload-btn {
+  background: #ffb800;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 10px;
+  width: 100%;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: 0.2s ease-in-out;
+}
+
+.upload-btn:hover {
+  background: #ff9900;
+  transform: scale(1.02);
+}
+
+/* Status Message */
+.upload-status {
+  margin-top: 15px;
+  font-weight: bold;
+  color: #00ffcc;
+}
+.dashboard-container {
+  flex: 1;
+  padding: 40px 50px;
+  margin-left: 270px;   /* ✅ Push content to the right */
+  overflow-y: auto;
+}

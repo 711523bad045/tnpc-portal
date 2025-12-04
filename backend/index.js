@@ -12,6 +12,10 @@ app.use(express.json());
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/questions", require("./routes/questions"));
 app.use("/api/study", require("./routes/studyRoutes"));
+app.use("/api/test", require("./routes/testRoutes"));
+app.use("/api/question-bank", require("./routes/uploadPdf"));
+app.use("/api/question-bank", require("./routes/questionBankRoutes"));
+app.use("/api/questions", require("./routes/questions"));
 
 app.get("/", (req, res) => {
   res.send("Backend server is running...");
