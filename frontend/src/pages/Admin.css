@@ -1,0 +1,309 @@
+/* ADMIN LOGIN PAGE LAYOUT */
+.admin-login-page {
+  flex: 1;
+  margin-left: 270px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #0a0e27;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated gradient orbs in background */
+.admin-login-page::before {
+  content: '';
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.4), transparent 70%);
+  top: -150px;
+  right: -150px;
+  animation: orbFloat1 18s ease-in-out infinite;
+  filter: blur(80px);
+}
+
+.admin-login-page::after {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.3), transparent 70%);
+  bottom: -200px;
+  left: -200px;
+  animation: orbFloat2 20s ease-in-out infinite;
+  filter: blur(80px);
+}
+
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-80px, 80px) scale(1.1); }
+}
+
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(100px, -100px) scale(1.15); }
+}
+
+/* Grid pattern overlay */
+.admin-login-page::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ADMIN LOGIN BOX */
+.admin-box {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 28px;
+  padding: 60px 50px;
+  width: 450px;
+  box-shadow: 
+    0 25px 70px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 1;
+  animation: boxEnter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes boxEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Glow effect behind box */
+.admin-box::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  border-radius: 28px;
+  opacity: 0.3;
+  filter: blur(20px);
+  z-index: -1;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.02); }
+}
+
+/* Animated border */
+.admin-box::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.3) 25%,
+    rgba(236, 72, 153, 0.3) 50%,
+    rgba(139, 92, 246, 0.3) 75%,
+    transparent 100%
+  );
+  border-radius: 28px;
+  z-index: -1;
+  animation: borderRotate 4s linear infinite;
+}
+
+@keyframes borderRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* TITLE */
+.admin-box h2 {
+  font-size: 2.2rem;
+  font-weight: 900;
+  margin-bottom: 40px;
+  text-align: center;
+  background: linear-gradient(135deg, #ffffff 0%, #a78bfa 50%, #f0abfc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 20px rgba(167, 139, 250, 0.5));
+  letter-spacing: -1px;
+  animation: titleGlow 2s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+  0%, 100% { filter: drop-shadow(0 0 20px rgba(167, 139, 250, 0.5)); }
+  50% { filter: drop-shadow(0 0 30px rgba(167, 139, 250, 0.8)); }
+}
+
+/* INPUT FIELDS */
+.admin-input {
+  width: 100%;
+  padding: 18px 24px;
+  margin-bottom: 24px;
+  border-radius: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.admin-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
+}
+
+.admin-input:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 0 0 4px rgba(139, 92, 246, 0.2),
+    inset 0 2px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Focused input glow */
+.admin-input:focus::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  border-radius: 14px;
+  z-index: -1;
+  filter: blur(10px);
+  opacity: 0.5;
+}
+
+/* LOGIN BUTTON */
+.admin-login-btn {
+  width: 100%;
+  padding: 18px;
+  margin-top: 20px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 800;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 
+    0 8px 24px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Button shine effect */
+.admin-login-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transition: left 0.6s ease;
+}
+
+.admin-login-btn:hover::before {
+  left: 100%;
+}
+
+.admin-login-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 12px 32px rgba(139, 92, 246, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #5b21b6 100%);
+}
+
+.admin-login-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 16px rgba(139, 92, 246, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Ripple effect on click */
+.admin-login-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.admin-login-btn:active::after {
+  width: 300px;
+  height: 300px;
+  opacity: 0;
+}
+
+/* Floating lock icon animation */
+.admin-box h2::before {
+  content: '🔐';
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 3rem;
+  animation: lockFloat 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.6));
+}
+
+@keyframes lockFloat {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-10px); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .admin-login-page {
+    margin-left: 0;
+    padding: 20px;
+  }
+  
+  .admin-box {
+    width: 90%;
+    padding: 40px 30px;
+  }
+  
+  .admin-box h2 {
+    font-size: 1.8rem;
+  }
+  
+  .admin-input {
+    padding: 16px 20px;
+  }
+  
+  .admin-login-btn {
+    padding: 16px;
+    font-size: 1rem;
+  }
+}
