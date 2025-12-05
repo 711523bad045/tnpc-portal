@@ -2,9 +2,9 @@ const mysql = require("mysql2");
 
 const db = mysql.createConnection({
   host: "localhost",
-  user: "root",         // your MySQL username
-  password: "",         // your MySQL password
-  database: "tnpc_portal"   // your database name
+  user: "root",
+  password: "",
+  database: "tnpc_portal"
 });
 
 db.connect((err) => {
