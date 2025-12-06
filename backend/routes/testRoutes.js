@@ -3,47 +3,139 @@ const router = express.Router();
 const db = require("../db");
 const auth = require("../middleware/auth");
 
-// ===============================
-// 👉 GET QUESTIONS (search supported)
-// ===============================
-router.get("/questions", auth, (req, res) => {
-  const search = req.query.search || "";
+/* -----------------------------------------------------
+   SUBMIT TEST RESULT
+----------------------------------------------------- */
+router.post("/submit", auth, (req, res) => {
+  const userId = req.user.id; // Get from auth middleware
+  const { subject, score, totalQuestions, timeTaken } = req.body;
+
+  console.log("📥 Received test submission:", {
+    userId,
+    subject,
+    score,
+    totalQuestions,
+    timeTaken
+  });
+
+  // Validate required fields
+  if (!subject || score == null || totalQuestions == null) {
+    console.error("❌ Validation failed: Missing fields");
+    return res.status(400).json({ 
+      error: "Missing required fields",
+      details: {
+        subject: !subject ? "missing" : "ok",
+        score: score == null ? "missing" : "ok",
+        totalQuestions: totalQuestions == null ? "missing" : "ok"
+      }
+    });
+  }
+
+  // Validate data types
+  if (typeof score !== 'number' || typeof totalQuestions !== 'number') {
+    console.error("❌ Validation failed: Invalid data types");
+    return res.status(400).json({ 
+      error: "Invalid data types",
+      details: {
+        score: typeof score,
+        totalQuestions: typeof totalQuestions
+      }
+    });
+  }
 
   const sql = `
-    SELECT id, question, option_a, option_b, option_c, option_d, answer
-    FROM questions
-    WHERE question LIKE ?
+    INSERT INTO test_results (user_id, subject, score, total_questions, time_taken, created_at)
+    VALUES (?, ?, ?, ?, ?, NOW())
   `;
 
-  db.query(sql, [`%${search}%`], (err, results) => {
+  db.query(sql, [userId, subject, score, totalQuestions, timeTaken || 0], (err, result) => {
     if (err) {
-      console.error("DB ERROR:", err);
-      return res.status(500).json({ error: "Database error" });
+      console.error("❌ DATABASE ERROR:", err.message);
+      console.error("SQL Error Code:", err.code);
+      return res.status(500).json({ 
+        error: "Database error",
+        message: err.message,
+        code: err.code
+      });
     }
 
-    res.json(results);
+    console.log("✅ Test result saved successfully:", { 
+      testId: result.insertId,
+      userId, 
+      subject, 
+      score, 
+      totalQuestions,
+      timeTaken
+    });
+    
+    res.status(200).json({ 
+      success: true,
+      message: "Result saved successfully!",
+      testId: result.insertId,
+      score: score,
+      totalQuestions: totalQuestions
+    });
   });
 });
 
-// ===============================
-// 👉 SUBMIT TEST RESULTS
-// ===============================
-router.post("/submit", auth, (req, res) => {
-  const { score, total, timeTaken } = req.body;
+/* -----------------------------------------------------
+   GET USER'S TEST HISTORY
+----------------------------------------------------- */
+router.get("/history", auth, (req, res) => {
+  const userId = req.user.id;
+  const { subject, limit = 10 } = req.query;
+
+  let sql = `
+    SELECT id, subject, score, total_questions, time_taken, created_at
+    FROM test_results
+    WHERE user_id = ?
+  `;
+  
+  const params = [userId];
+
+  if (subject) {
+    sql += ` AND subject = ?`;
+    params.push(subject);
+  }
+
+  sql += ` ORDER BY created_at DESC LIMIT ?`;
+  params.push(parseInt(limit));
+
+  db.query(sql, params, (err, rows) => {
+    if (err) {
+      console.error("❌ GET HISTORY ERROR:", err);
+      return res.status(500).json({ error: "Could not fetch test history" });
+    }
+
+    res.json(rows);
+  });
+});
+
+/* -----------------------------------------------------
+   GET TEST STATS SUMMARY
+----------------------------------------------------- */
+router.get("/stats", auth, (req, res) => {
   const userId = req.user.id;
 
   const sql = `
-    INSERT INTO tests (user_id, score, total, time_taken)
-    VALUES (?, ?, ?, ?)
+    SELECT 
+      subject,
+      COUNT(*) as total_tests,
+      AVG(score) as avg_score,
+      MAX(score) as best_score,
+      SUM(score) as total_score
+    FROM test_results
+    WHERE user_id = ?
+    GROUP BY subject
   `;
 
-  db.query(sql, [userId, score, total, timeTaken], (err) => {
+  db.query(sql, [userId], (err, rows) => {
     if (err) {
-      console.error("Test submit error:", err);
-      return res.status(500).json({ error: "Submit failed" });
+      console.error("❌ GET STATS ERROR:", err);
+      return res.status(500).json({ error: "Could not fetch test stats" });
     }
 
-    res.json({ message: "Test submitted successfully" });
+    res.json(rows);
   });
 });
 

@@ -1,27 +1,55 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import "./TakeTest.css";
 
 function TakeTest() {
   const { subject } = useParams();
+  const navigate = useNavigate();
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // LOAD QUESTIONS
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    
+    if (!token) {
+      setError("Please login to take the test");
+      navigate("/login");
+      return;
+    }
+
+    setLoading(true);
     axios
-      .get(`http://localhost:5000/api/test-questions/${subject}`)
-      .then((res) => setQuestions(res.data))
-      .catch(() => setQuestions([]));
-  }, [subject]);
+      .get(`http://localhost:5000/api/test-questions/${subject}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then((res) => {
+        if (res.data && res.data.length > 0) {
+          setQuestions(res.data);
+          setError(null);
+        } else {
+          setError(`No questions available for ${subject}`);
+        }
+      })
+      .catch((err) => {
+        console.error("❌ Error loading questions:", err);
+        setError("Failed to load questions. Please try again.");
+        setQuestions([]);
+      })
+      .finally(() => setLoading(false));
+  }, [subject, navigate]);
 
   // TIMER COUNTDOWN
   useEffect(() => {
-    if (submitted) return;
+    if (submitted || questions.length === 0) return;
 
     if (timeLeft === 0) {
       handleSubmit();
@@ -33,7 +61,7 @@ function TakeTest() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft, submitted]);
+  }, [timeLeft, submitted, questions.length]);
 
   // FORMAT TIMER
   const formatTimer = () => {
@@ -48,27 +76,116 @@ function TakeTest() {
   };
 
   // SUBMIT TEST
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (submitting) return; // Prevent double submission
+    
+    setSubmitting(true);
+    
+    // Calculate score
     let correct = 0;
-
     questions.forEach((q) => {
       if (answers[q.id] === q.answer) {
         correct++;
       }
     });
 
-    setScore(correct);
-    setSubmitted(true);
+    const finalScore = correct;
+    const timeTaken = 300 - timeLeft;
 
-    // SAVE RESULT IN BACKEND
-    axios.post("http://localhost:5000/api/test-submit/submit", {
-      userId: 1, // replace with logged-in user ID
-      subject,
-      score: correct,
-      totalQuestions: questions.length,
-      timeTaken: 300 - timeLeft
-    });
+    // SAVE RESULT IN BACKEND FIRST
+    try {
+      const token = localStorage.getItem("token");
+
+      console.log("📤 Submitting test:", {
+        subject,
+        score: finalScore,
+        totalQuestions: questions.length,
+        timeTaken
+      });
+
+      const response = await axios.post(
+        "http://localhost:5000/api/test/submit",
+        {
+          subject: subject,
+          score: finalScore,
+          totalQuestions: questions.length,
+          timeTaken: timeTaken
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      console.log("✅ Test submitted successfully:", response.data);
+      
+      // Only show results after successful save
+      setScore(finalScore);
+      setSubmitted(true);
+      
+    } catch (err) {
+      console.error("❌ Error submitting test:", err.response?.data || err.message);
+      
+      // Show results even if save failed, but warn user
+      setScore(finalScore);
+      setSubmitted(true);
+      
+      // More detailed error message
+      const errorMsg = err.response?.data?.error || "Unknown error occurred";
+      alert(`Test completed but failed to save results.\n\nError: ${errorMsg}\n\nYour score: ${finalScore}/${questions.length}\n\nPlease contact support or try taking the test again.`);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  // Calculate progress
+  const answeredCount = Object.keys(answers).length;
+  const progressPercentage = questions.length > 0 
+    ? Math.round((answeredCount / questions.length) * 100) 
+    : 0;
+
+  // Check if answer is correct or wrong
+  const getAnswerClass = (qid, option) => {
+    if (!submitted) return "";
+    const userAnswer = answers[qid];
+    const correctAnswer = questions.find(q => q.id === qid)?.answer;
+    
+    if (option === correctAnswer) return "correct-answer";
+    if (option === userAnswer && option !== correctAnswer) return "wrong-answer";
+    return "";
+  };
+
+  if (loading) {
+    return (
+      <div className="dashboard-layout">
+        <Sidebar />
+        <div className="dashboard-container">
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Loading questions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !questions.length) {
+    return (
+      <div className="dashboard-layout">
+        <Sidebar />
+        <div className="dashboard-container">
+          <div className="error-box">
+            <h2>⚠️ {error}</h2>
+            <button 
+              className="upload-btn" 
+              onClick={() => navigate("/daily-test")}
+            >
+              Back to Tests
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-layout">
@@ -78,53 +195,188 @@ function TakeTest() {
 
         {!submitted ? (
           <>
-            <h1 className="dashboard-title">📝 {subject.toUpperCase()} Test</h1>
-            <h2 style={{ color: timeLeft < 10 ? "red" : "white" }}>
-              ⏳ Time Left: {formatTimer()}
-            </h2>
+            <div className="test-header">
+              <div>
+                <h1 className="dashboard-title">
+                  📝 {subject.charAt(0).toUpperCase() + subject.slice(1)} Test
+                </h1>
+                <p className="test-info">
+                  {questions.length} Questions • 5 Minutes
+                </p>
+              </div>
+              
+              <div className="timer-box" style={{ 
+                color: timeLeft < 60 ? "#ef4444" : "#3b82f6",
+                fontWeight: "bold"
+              }}>
+                <span style={{ fontSize: "24px" }}>⏳</span>
+                <span style={{ fontSize: "32px", marginLeft: "10px" }}>
+                  {formatTimer()}
+                </span>
+              </div>
+            </div>
 
-            {questions.length === 0 ? (
-              <p>No questions found.</p>
-            ) : (
-              questions.map((q, index) => (
-                <div key={q.id} className="question-item">
-                  <p><strong>{index + 1}. {q.question}</strong></p>
+            {/* Progress Bar */}
+            <div className="progress-container">
+              <div className="progress-info">
+                <span>Progress: {answeredCount} / {questions.length} answered</span>
+                <span>{progressPercentage}%</span>
+              </div>
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+            </div>
 
-                  {["A", "B", "C", "D"].map((opt) => (
-                    <label key={opt}>
-                      <input
-                        type="radio"
-                        name={`q${q.id}`}
-                        onChange={() => chooseAnswer(q.id, opt)}
-                      />
-                      {opt}) {q[`option_${opt.toLowerCase()}`]}
-                      <br />
-                    </label>
-                  ))}
+            {/* Questions */}
+            <div className="questions-container">
+              {questions.map((q, index) => (
+                <div 
+                  key={q.id} 
+                  className={`question-card ${answers[q.id] ? 'answered' : ''}`}
+                >
+                  <div className="question-header">
+                    <span className="question-number">Question {index + 1}</span>
+                    {answers[q.id] && (
+                      <span className="answered-badge">✓ Answered</span>
+                    )}
+                  </div>
+                  
+                  <p className="question-text">{q.question}</p>
+
+                  <div className="options-container">
+                    {["A", "B", "C", "D"].map((opt) => (
+                      <label 
+                        key={opt}
+                        className={`option-label ${
+                          answers[q.id] === opt ? 'selected' : ''
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name={`q${q.id}`}
+                          checked={answers[q.id] === opt}
+                          onChange={() => chooseAnswer(q.id, opt)}
+                        />
+                        <span className="option-letter">{opt}</span>
+                        <span className="option-text">
+                          {q[`option_${opt.toLowerCase()}`]}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              ))
-            )}
+              ))}
+            </div>
 
-            <button className="upload-btn" onClick={handleSubmit}>
-              Submit Test
-            </button>
+            <div className="submit-container">
+              <button 
+                className="submit-btn" 
+                onClick={handleSubmit}
+                disabled={submitting || answeredCount === 0}
+              >
+                {submitting ? "Submitting..." : "Submit Test"}
+              </button>
+              {answeredCount < questions.length && (
+                <p className="warning-text">
+                  ⚠️ You have {questions.length - answeredCount} unanswered question(s)
+                </p>
+              )}
+            </div>
           </>
         ) : (
           // RESULT PAGE
-          <div className="result-box">
-            <h1>🎉 Test Completed!</h1>
-            <h2>Score: {score} / {questions.length}</h2>
-            <h3>Time Taken: {300 - timeLeft} seconds</h3>
-
-            <h2>📘 Answers & Explanations</h2>
-
-            {questions.map((q, index) => (
-              <div key={q.id} className="question-item">
-                <p><strong>{index + 1}. {q.question}</strong></p>
-                <p>Your Answer: {answers[q.id] || "Not answered"}</p>
-                <p>Correct Answer: {q.answer}</p>
+          <div className="result-container">
+            <div className="result-header">
+              <h1 className="result-title">
+                {score >= questions.length * 0.8 ? "🎉" : score >= questions.length * 0.5 ? "👍" : "📚"} 
+                Test Completed!
+              </h1>
+              
+              <div className="score-card">
+                <div className="score-big">
+                  {score} / {questions.length}
+                </div>
+                <div className="score-percentage">
+                  {Math.round((score / questions.length) * 100)}% Correct
+                </div>
               </div>
-            ))}
+
+              <div className="result-stats">
+                <div className="stat-item">
+                  <span className="stat-label">Time Taken</span>
+                  <span className="stat-value">
+                    {Math.floor((300 - timeLeft) / 60)}m {(300 - timeLeft) % 60}s
+                  </span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Subject</span>
+                  <span className="stat-value">
+                    {subject.charAt(0).toUpperCase() + subject.slice(1)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <h2 className="review-title">📘 Answer Review</h2>
+
+            <div className="review-container">
+              {questions.map((q, index) => {
+                const userAnswer = answers[q.id];
+                const isCorrect = userAnswer === q.answer;
+
+                return (
+                  <div 
+                    key={q.id} 
+                    className={`review-card ${isCorrect ? 'correct' : 'incorrect'}`}
+                  >
+                    <div className="review-header">
+                      <span className="review-number">Question {index + 1}</span>
+                      <span className={`review-badge ${isCorrect ? 'correct' : 'incorrect'}`}>
+                        {isCorrect ? "✓ Correct" : "✗ Incorrect"}
+                      </span>
+                    </div>
+
+                    <p className="review-question">{q.question}</p>
+
+                    <div className="review-answers">
+                      <div className="answer-row">
+                        <span className="answer-label">Your Answer:</span>
+                        <span className={`answer-value ${isCorrect ? 'correct' : 'incorrect'}`}>
+                          {userAnswer ? `${userAnswer}) ${q[`option_${userAnswer.toLowerCase()}`]}` : "Not answered"}
+                        </span>
+                      </div>
+                      
+                      {!isCorrect && (
+                        <div className="answer-row">
+                          <span className="answer-label">Correct Answer:</span>
+                          <span className="answer-value correct">
+                            {q.answer}) {q[`option_${q.answer.toLowerCase()}`]}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="result-actions">
+              <button 
+                className="btn-primary" 
+                onClick={() => navigate("/dashboard")}
+              >
+                View Dashboard
+              </button>
+              <button 
+                className="btn-secondary" 
+                onClick={() => navigate("/daily-test")}
+              >
+                Take Another Test
+              </button>
+            </div>
           </div>
         )}
       </div>
