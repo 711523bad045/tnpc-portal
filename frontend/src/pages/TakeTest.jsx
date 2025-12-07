@@ -92,7 +92,7 @@ function TakeTest() {
     const finalScore = correct;
     const timeTaken = 300 - timeLeft;
 
-    // SAVE RESULT IN BACKEND FIRST
+    // SAVE RESULT IN DATABASE
     try {
       const token = localStorage.getItem("token");
 
@@ -118,7 +118,7 @@ function TakeTest() {
 
       console.log("✅ Test submitted successfully:", response.data);
       
-      // Only show results after successful save
+      // Show results after successful save
       setScore(finalScore);
       setSubmitted(true);
       
@@ -129,7 +129,6 @@ function TakeTest() {
       setScore(finalScore);
       setSubmitted(true);
       
-      // More detailed error message
       const errorMsg = err.response?.data?.error || "Unknown error occurred";
       alert(`Test completed but failed to save results.\n\nError: ${errorMsg}\n\nYour score: ${finalScore}/${questions.length}\n\nPlease contact support or try taking the test again.`);
     } finally {
@@ -142,17 +141,6 @@ function TakeTest() {
   const progressPercentage = questions.length > 0 
     ? Math.round((answeredCount / questions.length) * 100) 
     : 0;
-
-  // Check if answer is correct or wrong
-  const getAnswerClass = (qid, option) => {
-    if (!submitted) return "";
-    const userAnswer = answers[qid];
-    const correctAnswer = questions.find(q => q.id === qid)?.answer;
-    
-    if (option === correctAnswer) return "correct-answer";
-    if (option === userAnswer && option !== correctAnswer) return "wrong-answer";
-    return "";
-  };
 
   if (loading) {
     return (

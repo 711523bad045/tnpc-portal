@@ -152,7 +152,7 @@ router.get("/weekly", auth, (req, res) => {
 });
 
 /* -----------------------------------------------------
-   YEARLY (Past 365 days) - KEEPING YOUR ORIGINAL
+   YEARLY (Past 365 days)
 ----------------------------------------------------- */
 router.get("/yearly", auth, (req, res) => {
   const user_id = req.user.id;
@@ -191,95 +191,6 @@ router.get("/yearly", auth, (req, res) => {
     }
 
     res.json(out);
-  });
-});
-
-/* -----------------------------------------------------
-   🆕 HEATMAP ENDPOINT - Shows test completion activity
-   Returns intensity based on:
-   - 0: No activity
-   - 1: Study time only (no tests)
-   - 2: 1 test completed
-   - 3: 2-3 tests completed
-   - 4: 4+ tests completed
------------------------------------------------------ */
-router.get("/heatmap", auth, (req, res) => {
-  const user_id = req.user.id;
-
-  // Get study time data
-  const studySql = `
-    SELECT date, seconds
-    FROM study_progress
-    WHERE user_id = ?
-      AND date >= DATE_SUB(CURDATE(), INTERVAL 364 DAY)
-  `;
-
-  // Get test completion count per day
-  const testSql = `
-    SELECT DATE(created_at) as test_date, COUNT(*) as test_count
-    FROM test_results
-    WHERE user_id = ?
-      AND DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 364 DAY)
-    GROUP BY DATE(created_at)
-  `;
-
-  db.query(studySql, [user_id], (err, studyRows) => {
-    if (err) {
-      console.error("DB error /heatmap study:", err);
-      return res.status(500).json({ error: "DB error" });
-    }
-
-    db.query(testSql, [user_id], (err, testRows) => {
-      if (err) {
-        console.error("DB error /heatmap tests:", err);
-        return res.status(500).json({ error: "DB error" });
-      }
-
-      // Create maps for quick lookup
-      const studyMap = {};
-      studyRows.forEach((row) => {
-        studyMap[row.date] = row.seconds;
-      });
-
-      const testMap = {};
-      testRows.forEach((row) => {
-        testMap[row.test_date] = row.test_count;
-      });
-
-      // Generate 365 days of data
-      const heatmapData = [];
-      const today = new Date();
-
-      for (let i = 364; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        const dateStr = date.toISOString().split("T")[0];
-
-        const hasStudyTime = studyMap[dateStr] && studyMap[dateStr] > 0;
-        const testCount = testMap[dateStr] || 0;
-
-        let intensity = 0;
-        if (testCount >= 4) {
-          intensity = 4;
-        } else if (testCount >= 2) {
-          intensity = 3;
-        } else if (testCount === 1) {
-          intensity = 2;
-        } else if (hasStudyTime) {
-          intensity = 1;
-        }
-
-        heatmapData.push({
-          date: dateStr,
-          month: date.getMonth(),
-          intensity: intensity,
-          studySeconds: studyMap[dateStr] || 0,
-          testCount: testCount
-        });
-      }
-
-      res.json(heatmapData);
-    });
   });
 });
 

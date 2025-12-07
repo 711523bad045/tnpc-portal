@@ -7,10 +7,11 @@ export const useStudyTimer = () => useContext(StudyTimerContext);
 export function StudyTimerProvider({ children }) {
   const [secondsToday, setSecondsToday] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   const timerRef = useRef(null);
   const saveRef = useRef(null);
-  const secondsRef = useRef(0); // Keep track of current seconds
+  const secondsRef = useRef(0);
 
   // Update ref whenever seconds change
   useEffect(() => {
@@ -18,15 +19,60 @@ export function StudyTimerProvider({ children }) {
   }, [secondsToday]);
 
   // -----------------------------------------------------
-  // Load today's SECONDS from backend once on startup
+  // 🔑 KEY FIX: Monitor token changes (login/logout)
   // -----------------------------------------------------
   useEffect(() => {
     const token = localStorage.getItem("token");
+    
     if (!token) {
+      // User logged out - reset everything
+      console.log("🚪 No token - resetting timer");
+      setSecondsToday(0);
+      secondsRef.current = 0;
+      setCurrentUserId(null);
       setIsLoaded(true);
       return;
     }
 
+    // Decode token to get user ID
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId = payload.id;
+
+      // If user changed, reload data
+      if (userId !== currentUserId) {
+        console.log("👤 User changed, loading new data for user:", userId);
+        setCurrentUserId(userId);
+        setIsLoaded(false); // Trigger reload
+        loadTodayData(token);
+      }
+    } catch (err) {
+      console.error("❌ Invalid token format:", err);
+      setSecondsToday(0);
+      setIsLoaded(true);
+    }
+  }, []); // Run once on mount
+
+  // Also check for token changes periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const token = localStorage.getItem("token");
+      if (!token && currentUserId !== null) {
+        // User logged out
+        console.log("🚪 User logged out - resetting timer");
+        setSecondsToday(0);
+        secondsRef.current = 0;
+        setCurrentUserId(null);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentUserId]);
+
+  // -----------------------------------------------------
+  // Load today's SECONDS from backend
+  // -----------------------------------------------------
+  const loadTodayData = (token) => {
     axios
       .get("http://localhost:5000/api/study/today", {
         headers: { Authorization: `Bearer ${token}` },
@@ -42,7 +88,7 @@ export function StudyTimerProvider({ children }) {
         setSecondsToday(0);
       })
       .finally(() => setIsLoaded(true));
-  }, []);
+  };
 
   // -----------------------------------------------------
   // Save function using ref to get latest value
@@ -54,11 +100,11 @@ export function StudyTimerProvider({ children }) {
     const currentSeconds = secondsRef.current;
     
     if (currentSeconds === 0 && !isFinal) {
-      return; // Don't save 0 unless it's final save
+      return;
     }
 
     try {
-      const response = await axios.post(
+      await axios.post(
         "http://localhost:5000/api/study/update",
         { seconds: currentSeconds },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -78,7 +124,7 @@ export function StudyTimerProvider({ children }) {
   // Start timer AFTER initial load
   // -----------------------------------------------------
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || !currentUserId) return;
 
     console.log("⏰ Starting timer from:", secondsRef.current);
 
@@ -96,7 +142,7 @@ export function StudyTimerProvider({ children }) {
       saveProgress(false);
     }, 20000);
 
-    // Save on page visibility change (tab switch, minimize)
+    // Save on page visibility change
     const handleVisibilityChange = () => {
       if (document.hidden) {
         console.log("👋 Tab hidden - saving progress");
@@ -105,7 +151,7 @@ export function StudyTimerProvider({ children }) {
     };
 
     // Save before page unload
-    const handleBeforeUnload = (e) => {
+    const handleBeforeUnload = () => {
       console.log("🚪 Page unloading - final save");
       saveProgress(true);
     };
@@ -118,12 +164,12 @@ export function StudyTimerProvider({ children }) {
       console.log("🛑 Timer cleanup - final save");
       clearInterval(timerRef.current);
       clearInterval(saveRef.current);
-      saveProgress(true); // Final save
+      saveProgress(true);
       
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [isLoaded]);
+  }, [isLoaded, currentUserId]);
 
   return (
     <StudyTimerContext.Provider value={{ secondsToday, isLoaded, saveProgress }}>

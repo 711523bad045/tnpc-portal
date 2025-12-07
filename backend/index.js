@@ -12,7 +12,7 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api/study", require("./routes/studyRoutes"));
 app.use("/api/question-bank", require("./routes/questionBank"));
 app.use("/api/test-questions", require("./routes/testQuestions"));
-app.use("/api/test", require("./routes/testSubmit"));  // ⬅️ CHANGED FROM /api/test-submit
+app.use("/api/test", require("./routes/testSubmit"));  // ⬅️ Changed to testSubmit if that file exists
 
 // ONLY NEW TEXT UPLOAD SYSTEM
 app.use("/api/text-upload", require("./routes/textUpload"));
@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
   res.send("Backend server is running...");
 });
 
-// 404 handler - helps debug missing routes
+// 404 handler
 app.use((req, res) => {
   console.log("❌ 404 - Route not found:", req.method, req.path);
   res.status(404).json({ 

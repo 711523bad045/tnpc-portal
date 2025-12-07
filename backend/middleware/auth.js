@@ -1,17 +1,31 @@
-const jwt = require("jsonwebtoken");
+const express = require("express");
+const router = express.Router();
+const db = require("../db");
+const auth = require("../middleware/auth");
 
-module.exports = function (req, res, next) {
-  const token = req.header("Authorization")?.replace("Bearer ", "");
+/* -----------------------------------------------------
+   SUBMIT TEST - SIMPLE VERSION
+----------------------------------------------------- */
+router.post("/submit", auth, (req, res) => {
+  const userId = req.user.id;
+  const { subject, score, totalQuestions, timeTaken } = req.body;
 
-  if (!token) {
-    return res.status(401).json({ message: "No token, authorization denied" });
-  }
+  console.log("📥 Test submission from user:", userId);
 
-  try {
-    const decoded = jwt.verify(token, "secret123");
-    req.user = { id: decoded.id };
-    next();
-  } catch (err) {
-    res.status(400).json({ message: "Token is not valid" });
-  }
-};
+  const sql = `
+    INSERT INTO test_results (user_id, subject, score, total_questions, time_taken, created_at)
+    VALUES (?, ?, ?, ?, ?, NOW())
+  `;
+
+  db.query(sql, [userId, subject, score, totalQuestions, timeTaken || 0], (err, result) => {
+    if (err) {
+      console.error("❌ DB Error:", err);
+      return res.status(500).json({ error: "Failed to save" });
+    }
+
+    console.log("✅ Saved! Test ID:", result.insertId);
+    res.json({ success: true, testId: result.insertId });
+  });
+});
+
+module.exports = router;
