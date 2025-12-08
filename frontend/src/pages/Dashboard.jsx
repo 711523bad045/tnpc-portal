@@ -10,53 +10,35 @@ import {
   Tooltip,
   Cell,
 } from "recharts";
-import { Clock, TrendingUp, Calendar, Award } from "lucide-react";
+import { Clock, Calendar, Award, Zap, Target, Brain } from "lucide-react";
 import "./Dashboard.css";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const getTodayLabel = () => {
   const dayIndex = new Date().getDay();
   return DAYS[dayIndex === 0 ? 6 : dayIndex - 1];
 };
 
-// Generate heatmap data (you can replace this with real data from backend later)
-const generateHeatmapData = () => {
-  const data = [];
-  const today = new Date();
-  const startDate = new Date(today.getFullYear(), 0, 1);
-  
-  for (let i = 0; i < 365; i++) {
-    const date = new Date(startDate);
-    date.setDate(startDate.getDate() + i);
-    data.push({
-      date: date,
-      month: date.getMonth(),
-      intensity: Math.random() > 0.7 ? Math.floor(Math.random() * 4) : 0
-    });
-  }
-  return data;
-};
-
 function Dashboard() {
   const [weeklyData, setWeeklyData] = useState(
     DAYS.map((day) => ({ day, minutes: 0 }))
   );
+  const [monthlyData, setMonthlyData] = useState([]);
   const [secondsToday, setSecondsToday] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [heatmapData] = useState(generateHeatmapData());
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [monthlyTotal, setMonthlyTotal] = useState(0);
 
   const timerIntervalRef = useRef(null);
   const saveIntervalRef = useRef(null);
   const todayLabel = getTodayLabel();
 
-  // Stats calculations
   const totalWeekMinutes = weeklyData.reduce((sum, d) => sum + d.minutes, 0);
   const avgDaily = (totalWeekMinutes / 7).toFixed(0);
   const todayMinutes = (secondsToday / 60).toFixed(0);
+  const todayHours = (secondsToday / 3600).toFixed(1);
 
-  // ================= LOAD TODAY + WEEKLY DATA =====================
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -73,6 +55,8 @@ function Dashboard() {
       .catch(() => setIsLoading(false));
 
     loadWeeklyData();
+    loadMonthlyData();
+    calculateStreak();
   }, []);
 
   const loadWeeklyData = () => {
@@ -85,7 +69,30 @@ function Dashboard() {
       .catch((err) => console.error(err));
   };
 
-  // ================= TIMER + AUTO SAVE =====================
+  const loadMonthlyData = () => {
+    const token = localStorage.getItem("token");
+    axios
+      .get("http://localhost:5000/api/study/monthly", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        setMonthlyData(res.data);
+        const total = res.data.reduce((sum, item) => sum + (Number(item.minutes) || 0), 0);
+        setMonthlyTotal(total);
+      })
+      .catch((err) => console.error(err));
+  };
+
+  const calculateStreak = () => {
+    const token = localStorage.getItem("token");
+    axios
+      .get("http://localhost:5000/api/study/streak", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setCurrentStreak(res.data.streak))
+      .catch((err) => console.error(err));
+  };
+
   useEffect(() => {
     if (isLoading) return;
 
@@ -104,10 +111,8 @@ function Dashboard() {
     };
   }, [isLoading]);
 
-  // ================= UPDATE LIVE WEEKLY GRAPH =====================
   useEffect(() => {
     const minutes = Number((secondsToday / 60).toFixed(2));
-
     setWeeklyData((prev) =>
       prev.map((item) =>
         item.day === todayLabel ? { ...item, minutes } : item
@@ -115,7 +120,6 @@ function Dashboard() {
     );
   }, [secondsToday, todayLabel]);
 
-  // ================= SAVE TO BACKEND =====================
   const saveProgress = async (isFinal = false) => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -129,14 +133,16 @@ function Dashboard() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (!isFinal) loadWeeklyData();
-      if (isFinal) console.log("Final saved:", minutes);
+      if (!isFinal) {
+        loadWeeklyData();
+        loadMonthlyData();
+        calculateStreak();
+      }
     } catch (err) {
       console.error("Save failed", err);
     }
   };
 
-  // ================= PAGE VISIBILITY / REFRESH SAVE =====================
   useEffect(() => {
     const handleBeforeUnload = () => saveProgress(true);
     const handleVisibility = () => {
@@ -152,7 +158,6 @@ function Dashboard() {
     };
   }, [secondsToday]);
 
-  // ================= FORMAT TIMER =====================
   const formatTime = (sec) => {
     sec = Math.round(sec);
     const h = String(Math.floor(sec / 3600)).padStart(2, "0");
@@ -161,12 +166,6 @@ function Dashboard() {
     return `${h}:${m}:${s}`;
   };
 
-  const getIntensityColor = (intensity) => {
-    const colors = ["#e5e7eb", "#93c5fd", "#3b82f6", "#1d4ed8", "#1e3a8a"];
-    return colors[intensity] || colors[0];
-  };
-
-  // Get bar color based on value
   const getBarColor = (minutes) => {
     if (minutes >= 90) return "#10b981";
     if (minutes >= 60) return "#3b82f6";
@@ -185,127 +184,108 @@ function Dashboard() {
     );
   }
 
+  const activeDays = monthlyData.filter(d => d.minutes > 0).length;
+  const monthlyHours = (monthlyTotal / 60).toFixed(1);
+
   return (
     <div className="dashboard-page">
-      {/* Header */}
-      <div className="dashboard-header">
-        <div>
-          <h1 className="dashboard-title">Study Dashboard</h1>
-          <p className="dashboard-subtitle">Track your learning journey 🚀</p>
-        </div>
-        <div className="streak-badge">
-          <Award size={24} color="#f59e0b" />
-          <div className="streak-info">
-            <div className="streak-number">7</div>
-            <div className="streak-label">Day Streak</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Cards Row */}
-      <div className="stats-grid">
-        <div className="stat-card gradient-blue">
-          <div className="card-icon">
-            <Clock size={24} color="#3b82f6" />
-          </div>
-          <div className="card-content">
-            <div className="card-label">Today's Focus</div>
-            <div className="card-value">{formatTime(secondsToday)}</div>
-            <div className="card-subtext">{todayMinutes} minutes logged</div>
-          </div>
-        </div>
-
-        <div className="stat-card gradient-green">
-          <div className="card-icon">
-            <TrendingUp size={24} color="#10b981" />
-          </div>
-          <div className="card-content">
-            <div className="card-label">Weekly Total</div>
-            <div className="card-value">{totalWeekMinutes.toFixed(0)} min</div>
-            <div className="card-subtext">Avg {avgDaily} min/day</div>
-          </div>
-        </div>
-
-        <div className="stat-card gradient-purple">
-          <div className="card-icon">
-            <Calendar size={24} color="#8b5cf6" />
-          </div>
-          <div className="card-content">
-            <div className="card-label">This Month</div>
-            <div className="card-value">2,340 min</div>
-            <div className="card-subtext">+23% from last month</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Heatmap Card */}
-      <div className="dashboard-card-large">
-        <div className="card-header">
-          <h2 className="card-title">📅 Yearly Study Heatmap</h2>
-          <div className="heatmap-legend">
-            <span className="legend-text">Less</span>
-            {[0, 1, 2, 3, 4].map(i => (
-              <div
-                key={i}
-                className="legend-box"
-                style={{ backgroundColor: getIntensityColor(i) }}
-              />
-            ))}
-            <span className="legend-text">More</span>
+      {/* Hero Section with Timer */}
+      <div className="hero-section">
+        <div className="hero-header">
+          <Brain size={48} color="#fff" strokeWidth={2.5} />
+          <div>
+            <h1 className="hero-title">Study Tracker</h1>
+            <p className="hero-subtitle">Your learning journey, visualized</p>
           </div>
         </div>
         
-        <div className="heatmap-container">
-          {/* Month labels */}
-          <div className="month-labels">
-            {MONTHS.map((month, idx) => (
-              <span key={idx} className="month-label">{month}</span>
-            ))}
+        <div className="timer-section">
+          <div className="timer-label">TODAY'S SESSION</div>
+          <div className="timer-display">{formatTime(secondsToday)}</div>
+          <div className="timer-stats">
+            <span>{todayMinutes} minutes</span>
+            <span className="dot">•</span>
+            <span>{todayHours} hours</span>
           </div>
-          
-          {/* Heatmap grid */}
-          <div className="heatmap-grid">
-            {heatmapData.map((item, i) => (
-              <div
-                key={i}
-                className="heatmap-cell"
-                style={{
-                  backgroundColor: getIntensityColor(item.intensity),
-                  animationDelay: `${i * 0.001}s`
-                }}
-                title={`${item.date.toLocaleDateString()}: ${item.intensity * 25} min`}
-              />
-            ))}
+        </div>
+
+        <div className="streak-badge-new">
+          <Award size={32} color="#fbbf24" fill="#fbbf24" />
+          <div className="streak-text">
+            <span className="streak-number">{currentStreak}</span>
+            <span className="streak-label">Day Streak</span>
           </div>
         </div>
       </div>
 
-      {/* Weekly Chart Card */}
-      <div className="dashboard-card-large">
-        <div className="card-header">
-          <h2 className="card-title">📊 Weekly Study Progress</h2>
-          <div className="chart-legend">
-            <div className="legend-item">
-              <div className="legend-dot" style={{ backgroundColor: "#10b981" }} />
-              <span>Excellent (90+ min)</span>
+      {/* Stats Cards */}
+      <div className="stats-grid-new">
+        <div className="stat-card-new card-purple">
+          <div className="stat-icon-new">
+            <Zap size={28} color="#a855f7" />
+          </div>
+          <div className="stat-content-new">
+            <div className="stat-label-new">Weekly Total</div>
+            <div className="stat-value-new">{totalWeekMinutes.toFixed(0)}</div>
+            <div className="stat-unit-new">minutes</div>
+            <div className="stat-sub-new">Avg {avgDaily} min/day</div>
+          </div>
+        </div>
+
+        <div className="stat-card-new card-blue">
+          <div className="stat-icon-new">
+            <Calendar size={28} color="#3b82f6" />
+          </div>
+          <div className="stat-content-new">
+            <div className="stat-label-new">This Month</div>
+            <div className="stat-value-new">{monthlyHours}</div>
+            <div className="stat-unit-new">hours</div>
+            <div className="stat-sub-new">{activeDays} active days</div>
+          </div>
+        </div>
+
+        <div className="stat-card-new card-green">
+          <div className="stat-icon-new">
+            <Target size={28} color="#10b981" />
+          </div>
+          <div className="stat-content-new">
+            <div className="stat-label-new">Daily Goal</div>
+            <div className="stat-value-new">{Math.min(100, (todayMinutes / 60) * 100).toFixed(0)}%</div>
+            <div className="stat-unit-new">complete</div>
+            <div className="stat-sub-new">Target: 60 min</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Weekly Chart */}
+      <div className="chart-card-new">
+        <div className="chart-header-new">
+          <div>
+            <h2 className="chart-title-new">Weekly Performance</h2>
+            <p className="chart-subtitle-new">Last 7 days breakdown</p>
+          </div>
+          <div className="chart-legend-new">
+            <div className="legend-item-new">
+              <div className="legend-dot-new" style={{ backgroundColor: "#10b981" }}></div>
+              <span>Excellent 90+</span>
             </div>
-            <div className="legend-item">
-              <div className="legend-dot" style={{ backgroundColor: "#3b82f6" }} />
-              <span>Good (60-90 min)</span>
+            <div className="legend-item-new">
+              <div className="legend-dot-new" style={{ backgroundColor: "#3b82f6" }}></div>
+              <span>Good 60-90</span>
             </div>
-            <div className="legend-item">
-              <div className="legend-dot" style={{ backgroundColor: "#f59e0b" }} />
-              <span>Fair (30-60 min)</span>
+            <div className="legend-item-new">
+              <div className="legend-dot-new" style={{ backgroundColor: "#f59e0b" }}></div>
+              <span>Fair 30-60</span>
             </div>
           </div>
         </div>
-        <div className="chart-container">
-          <ResponsiveContainer width="100%" height={320}>
+        <div className="chart-container-new">
+          <ResponsiveContainer width="100%" height={350}>
             <BarChart data={weeklyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis 
                 dataKey="day" 
-                tick={{ fill: "#6b7280", fontSize: 14 }}
+                tick={{ fill: "#6b7280", fontSize: 14, fontWeight: 600 }}
                 stroke="#d1d5db"
               />
               <YAxis 
@@ -319,10 +299,11 @@ function Dashboard() {
                   border: "none",
                   borderRadius: "12px",
                   color: "#fff",
-                  padding: "12px"
+                  padding: "12px 16px",
+                  fontWeight: 600
                 }}
               />
-              <Bar dataKey="minutes" radius={[8, 8, 0, 0]}>
+              <Bar dataKey="minutes" radius={[12, 12, 0, 0]}>
                 {weeklyData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={getBarColor(entry.minutes)} />
                 ))}

@@ -7,7 +7,6 @@ const auth = require("../middleware/auth");
 // SAVE / UPDATE today's minutes
 router.post("/update", auth, (req, res) => {
   const user_id = req.user.id;
-  // Expect minutes as decimal or integer (we store as DECIMAL)
   const minutes = Number(req.body.minutes || 0);
   const today = new Date().toISOString().split("T")[0];
 
@@ -59,13 +58,11 @@ router.get("/weekly", auth, (req, res) => {
       return res.status(500).json({ error: "DB error" });
     }
 
-    // Prepare Mon..Sun
     const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    // default 0
     const weekly = DAYS.map((day) => ({ day, minutes: 0 }));
 
     rows.forEach((row) => {
-      const d = new Date(row.date).getDay(); // 0=Sun
+      const d = new Date(row.date).getDay();
       const idx = d === 0 ? 6 : d - 1;
       weekly[idx].minutes = Number(row.minutes);
     });
@@ -74,20 +71,20 @@ router.get("/weekly", auth, (req, res) => {
   });
 });
 
-// GET yearly heatmap data (last 365 days)
-// returns array [{ date: '2025-12-02', minutes: 10 }, ...]
-router.get("/yearly", auth, (req, res) => {
+// GET monthly data (last 30 days with day number)
+router.get("/monthly", auth, (req, res) => {
   const user_id = req.user.id;
   const sql = `
     SELECT date, minutes
     FROM study_progress
     WHERE user_id = ?
-      AND date >= DATE_SUB(CURDATE(), INTERVAL 364 DAY)
+      AND date >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
     ORDER BY date ASC
   `;
+  
   db.query(sql, [user_id], (err, rows) => {
     if (err) {
-      console.error("DB error /yearly:", err);
+      console.error("DB error /monthly:", err);
       return res.status(500).json({ error: "DB error" });
     }
 
@@ -95,17 +92,108 @@ router.get("/yearly", auth, (req, res) => {
     const map = {};
     rows.forEach((r) => (map[r.date] = Number(r.minutes)));
 
-    // Create array for last 365 days
+    // Create array for last 30 days
     const out = [];
     const today = new Date();
-    for (let i = 364; i >= 0; i--) {
+    for (let i = 29; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
       const iso = d.toISOString().split("T")[0];
-      out.push({ date: iso, minutes: map[iso] || 0 });
+      out.push({ 
+        date: iso, 
+        day: d.getDate(),
+        minutes: map[iso] || 0 
+      });
     }
 
     res.json(out);
+  });
+});
+
+// GET daily data (last 14 days with detailed info)
+router.get("/daily", auth, (req, res) => {
+  const user_id = req.user.id;
+  const sql = `
+    SELECT date, minutes
+    FROM study_progress
+    WHERE user_id = ?
+      AND date >= DATE_SUB(CURDATE(), INTERVAL 13 DAY)
+    ORDER BY date ASC
+  `;
+  
+  db.query(sql, [user_id], (err, rows) => {
+    if (err) {
+      console.error("DB error /daily:", err);
+      return res.status(500).json({ error: "DB error" });
+    }
+
+    // Build a map of date -> minutes
+    const map = {};
+    rows.forEach((r) => (map[r.date] = Number(r.minutes)));
+
+    // Create array for last 14 days
+    const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const out = [];
+    const today = new Date();
+    
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const iso = d.toISOString().split("T")[0];
+      out.push({ 
+        date: iso,
+        day: d.getDate(),
+        dayName: DAYS[d.getDay()],
+        minutes: map[iso] || 0 
+      });
+    }
+
+    res.json(out);
+  });
+});
+
+// GET current streak
+router.get("/streak", auth, (req, res) => {
+  const user_id = req.user.id;
+  const sql = `
+    SELECT date, minutes
+    FROM study_progress
+    WHERE user_id = ?
+      AND date <= CURDATE()
+      AND minutes > 0
+    ORDER BY date DESC
+  `;
+  
+  db.query(sql, [user_id], (err, rows) => {
+    if (err) {
+      console.error("DB error /streak:", err);
+      return res.status(500).json({ error: "DB error" });
+    }
+
+    if (!rows || rows.length === 0) {
+      return res.json({ streak: 0 });
+    }
+
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < rows.length; i++) {
+      const rowDate = new Date(rows[i].date);
+      rowDate.setHours(0, 0, 0, 0);
+      
+      const expectedDate = new Date(today);
+      expectedDate.setDate(today.getDate() - streak);
+      expectedDate.setHours(0, 0, 0, 0);
+
+      if (rowDate.getTime() === expectedDate.getTime()) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    res.json({ streak });
   });
 });
 
