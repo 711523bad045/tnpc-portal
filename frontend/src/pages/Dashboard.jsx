@@ -226,7 +226,7 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Weekly Chart */}
+      {/* Weeekly chart the next thing will come soon*/}
       <div className="chart-card-new">
         <div className="chart-header-new">
           <div>
