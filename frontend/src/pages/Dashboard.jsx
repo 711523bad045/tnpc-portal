@@ -24,11 +24,9 @@ function Dashboard() {
   const [weeklyData, setWeeklyData] = useState(
     DAYS.map((day) => ({ day, minutes: 0 }))
   );
-  const [monthlyData, setMonthlyData] = useState([]);
   const [secondsToday, setSecondsToday] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [currentStreak, setCurrentStreak] = useState(0);
-  const [monthlyTotal, setMonthlyTotal] = useState(0);
 
   const timerIntervalRef = useRef(null);
   const saveIntervalRef = useRef(null);
@@ -55,7 +53,6 @@ function Dashboard() {
       .catch(() => setIsLoading(false));
 
     loadWeeklyData();
-    loadMonthlyData();
     calculateStreak();
   }, []);
 
@@ -66,20 +63,6 @@ function Dashboard() {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setWeeklyData(res.data))
-      .catch((err) => console.error(err));
-  };
-
-  const loadMonthlyData = () => {
-    const token = localStorage.getItem("token");
-    axios
-      .get("http://localhost:5000/api/study/monthly", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        setMonthlyData(res.data);
-        const total = res.data.reduce((sum, item) => sum + (Number(item.minutes) || 0), 0);
-        setMonthlyTotal(total);
-      })
       .catch((err) => console.error(err));
   };
 
@@ -135,7 +118,6 @@ function Dashboard() {
 
       if (!isFinal) {
         loadWeeklyData();
-        loadMonthlyData();
         calculateStreak();
       }
     } catch (err) {
@@ -184,9 +166,6 @@ function Dashboard() {
     );
   }
 
-  const activeDays = monthlyData.filter(d => d.minutes > 0).length;
-  const monthlyHours = (monthlyTotal / 60).toFixed(1);
-
   return (
     <div className="dashboard-page">
       {/* Hero Section with Timer */}
@@ -198,7 +177,7 @@ function Dashboard() {
             <p className="hero-subtitle">Your learning journey, visualized</p>
           </div>
         </div>
-        
+
         <div className="timer-section">
           <div className="timer-label">TODAY'S SESSION</div>
           <div className="timer-display">{formatTime(secondsToday)}</div>
@@ -232,25 +211,15 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="stat-card-new card-blue">
-          <div className="stat-icon-new">
-            <Calendar size={28} color="#3b82f6" />
-          </div>
-          <div className="stat-content-new">
-            <div className="stat-label-new">This Month</div>
-            <div className="stat-value-new">{monthlyHours}</div>
-            <div className="stat-unit-new">hours</div>
-            <div className="stat-sub-new">{activeDays} active days</div>
-          </div>
-        </div>
-
         <div className="stat-card-new card-green">
           <div className="stat-icon-new">
             <Target size={28} color="#10b981" />
           </div>
           <div className="stat-content-new">
             <div className="stat-label-new">Daily Goal</div>
-            <div className="stat-value-new">{Math.min(100, (todayMinutes / 60) * 100).toFixed(0)}%</div>
+            <div className="stat-value-new">
+              {Math.min(100, (todayMinutes / 60) * 100).toFixed(0)}%
+            </div>
             <div className="stat-unit-new">complete</div>
             <div className="stat-sub-new">Target: 60 min</div>
           </div>
@@ -266,46 +235,64 @@ function Dashboard() {
           </div>
           <div className="chart-legend-new">
             <div className="legend-item-new">
-              <div className="legend-dot-new" style={{ backgroundColor: "#10b981" }}></div>
+              <div
+                className="legend-dot-new"
+                style={{ backgroundColor: "#10b981" }}
+              ></div>
               <span>Excellent 90+</span>
             </div>
             <div className="legend-item-new">
-              <div className="legend-dot-new" style={{ backgroundColor: "#3b82f6" }}></div>
+              <div
+                className="legend-dot-new"
+                style={{ backgroundColor: "#3b82f6" }}
+              ></div>
               <span>Good 60-90</span>
             </div>
             <div className="legend-item-new">
-              <div className="legend-dot-new" style={{ backgroundColor: "#f59e0b" }}></div>
+              <div
+                className="legend-dot-new"
+                style={{ backgroundColor: "#f59e0b" }}
+              ></div>
               <span>Fair 30-60</span>
             </div>
           </div>
         </div>
+
         <div className="chart-container-new">
           <ResponsiveContainer width="100%" height={350}>
             <BarChart data={weeklyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis 
-                dataKey="day" 
+              <XAxis
+                dataKey="day"
                 tick={{ fill: "#6b7280", fontSize: 14, fontWeight: 600 }}
                 stroke="#d1d5db"
               />
-              <YAxis 
+              <YAxis
                 tick={{ fill: "#6b7280", fontSize: 14 }}
                 stroke="#d1d5db"
-                label={{ value: 'Minutes', angle: -90, position: 'insideLeft', fill: "#6b7280" }}
+                label={{
+                  value: "Minutes",
+                  angle: -90,
+                  position: "insideLeft",
+                  fill: "#6b7280",
+                }}
               />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{
                   backgroundColor: "#1f2937",
                   border: "none",
                   borderRadius: "12px",
                   color: "#fff",
                   padding: "12px 16px",
-                  fontWeight: 600
+                  fontWeight: 600,
                 }}
               />
               <Bar dataKey="minutes" radius={[12, 12, 0, 0]}>
                 {weeklyData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getBarColor(entry.minutes)} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={getBarColor(entry.minutes)}
+                  />
                 ))}
               </Bar>
             </BarChart>
