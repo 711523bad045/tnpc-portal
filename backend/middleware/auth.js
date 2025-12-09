@@ -1,31 +1,18 @@
-const express = require("express");
-const router = express.Router();
-const db = require("../db");
-const auth = require("../middleware/auth");
+const jwt = require("jsonwebtoken");
 
-/* -----------------------------------------------------
-   SUBMIT TEST - SIMPLE VERSION
------------------------------------------------------ */
-router.post("/submit", auth, (req, res) => {
-  const userId = req.user.id;
-  const { subject, score, totalQuestions, timeTaken } = req.body;
+module.exports = function (req, res, next) {
+  const token = req.header("Authorization")?.replace("Bearer ", "");
 
-  console.log("📥 Test submission from user:", userId);
+  if (!token) {
+    return res.status(401).json({ message: "No token, authorization denied" });
+  }
 
-  const sql = `
-    INSERT INTO test_results (user_id, subject, score, total_questions, time_taken, created_at)
-    VALUES (?, ?, ?, ?, ?, NOW())
-  `;
-
-  db.query(sql, [userId, subject, score, totalQuestions, timeTaken || 0], (err, result) => {
-    if (err) {
-      console.error("❌ DB Error:", err);
-      return res.status(500).json({ error: "Failed to save" });
-    }
-
-    console.log("✅ Saved! Test ID:", result.insertId);
-    res.json({ success: true, testId: result.insertId });
-  });
-});
-
-module.exports = router;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // ✅ use SAME secret
+    req.user = { id: decoded.id };
+    next();
+  } catch (err) {
+    console.error("JWT Error:", err);
+    res.status(400).json({ message: "Token is not valid" });
+  }
+};
