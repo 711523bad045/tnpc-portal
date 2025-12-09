@@ -1,0 +1,12 @@
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 25px;
+}
+
+.video-frame {
+  width: 100%;
+  height: 230px;
+  border-radius: 12px;
+  border: none;
+}
