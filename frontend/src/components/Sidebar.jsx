@@ -5,7 +5,7 @@ import {
   ClipboardList,
   FileQuestion,
   Video,
-  BookOpen,
+  User,
   LogOut,
 } from "lucide-react";
 import "./Sidebar.css";
@@ -13,7 +13,7 @@ import "./Sidebar.css";
 function Sidebar() {
   return (
     <div className="sidebar">
-      <div className="sidebar-header">TNPC Portal</div>
+      <div className="sidebar-header">TNPSC Portal</div>
 
       <nav className="sidebar-menu">
         <NavLink to="/dashboard" className="menu-item">
@@ -32,9 +32,10 @@ function Sidebar() {
           <Video size={18} /> <span>Video Classes</span>
         </NavLink>
 
-        <NavLink to="/study-notes" className="menu-item">
-          <BookOpen size={18} /> <span>Study Notes</span>
-        </NavLink>
+        <NavLink to="/account" className="menu-item">
+        <User size={18} /> <span>Account</span>
+       </NavLink>
+
       </nav>
 
       <div className="sidebar-footer">

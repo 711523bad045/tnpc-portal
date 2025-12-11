@@ -21,7 +21,7 @@ function Home() {
           <img src={logo} className="logo" alt="TNPSC Logo" />
 
           <div className="title-block">
-            <h2 className="site-title">TNPC GROUP 4 - STUDY PORTAL</h2>
+            <h2 className="site-title">TNPSC GROUP 4 - STUDY PORTAL</h2>
             <p className="subtitle">100 Days Study Plan to Pass Group 4</p>
           </div>
         </div>
@@ -39,7 +39,7 @@ function Home() {
           </h1>
 
           <p className="hero-subtitle">
-            TNPC exam preparation made simple. Learn, practice, and grow.
+            TNPSC exam preparation made simple. Learn, practice, and grow.
           </p>
 
           <div className="btn-group">
@@ -55,7 +55,7 @@ function Home() {
 
       {/* Footer */}
       <footer id="contact-section" className="footer fade-up">
-        <p className="footer-title">TNPC Group 4 Study Portal</p>
+        <p className="footer-title">TNPSC Group 4 Study Portal</p>
 
         <p>
           <strong>Email:</strong>{" "}
@@ -67,7 +67,7 @@ function Home() {
           <a href="tel:9751247267">+91 9751247267</a>
         </p>
 
-        <p className="copy">© 2025 TNPC Study Portal - All Rights Reserved</p>
+        <p className="copy">© 2025 TNPSC Study Portal - All Rights Reserved</p>
       </footer>
 
     </div>

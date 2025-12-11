@@ -8,7 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Layout from "./components/Layout";
 
 import QuestionBank from "./pages/QuestionBank";
-
+import Account from "./pages/Account";
 import AdminLogin from "./pages/AdminLogin";
 import AdminQuestionBank from "./pages/AdminQuestionUpload";
 import SubjectQuestions from "./pages/SubjectQuestions";
@@ -44,7 +44,7 @@ function App() {
           </Layout>
         }
       />
-
+      <Route path="/account" element={<Account />} />
       {/* Optional support for /videos */}
       <Route
         path="/videos"
