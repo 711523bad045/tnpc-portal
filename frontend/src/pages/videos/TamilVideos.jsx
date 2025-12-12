@@ -10,7 +10,7 @@ export default function TamilVideos() {
   const videos = [
     { id: "EXVNgFm9wGE", title: "Tamil Grammar Basics", instructor: "Dr. Kumar", duration: "12:30" },
     { id: "B3a-f_quy1I", title: "Tamil Literature Overview", instructor: "Prof. Guru", duration: "18:40" },
-    { id: "bhF5iR1rufo", title: "Tamil Speaking Practice", instructor: "Mrs.Rajesh", duration: "20:15" },
+    { id: "bhF5iR1rufo", title: "Tamil Speaking Practice", instructor: "Mr.Rajesh", duration: "20:15" },
     { id: "8tQoG9hsADg", title: "Tamil Script Writing", instructor: "Mr. Rajan", duration: "25:10" }
   ];
 

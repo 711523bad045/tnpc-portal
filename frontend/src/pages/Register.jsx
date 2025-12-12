@@ -8,6 +8,7 @@ function Register() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(""); // ⭐ Popup error message
 
   const [form, setForm] = useState({
     name: "",
@@ -15,41 +16,67 @@ function Register() {
     password: ""
   });
 
+  const showError = (msg) => {
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(""), 3000); // auto-clear
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // 🔥 Show loading spinner
+
+    // ⭐ BASIC VALIDATION
+    if (!form.name.trim() || !form.email.trim() || !form.password.trim()) {
+      showError("⚠️ Please fill all fields");
+      return;
+    }
+
+    if (form.password.length < 6) {
+      showError("⚠️ Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/register", form);
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/register",
+        form
+      );
 
       if (res.data.message === "User registered successfully") {
-
-        // Automatically login the user after register
-        const loginRes = await axios.post("http://localhost:5000/api/auth/login", {
-          email: form.email,
-          password: form.password
-        });
+        // ⭐ After register → Auto login
+        const loginRes = await axios.post(
+          "http://localhost:5000/api/auth/login",
+          {
+            email: form.email,
+            password: form.password
+          }
+        );
 
         if (loginRes.data.token) {
           localStorage.setItem("token", loginRes.data.token);
-
-          // 🔥 Redirect to dashboard directly
           navigate("/dashboard");
         }
-
       } else {
-        alert(res.data.error || "Something went wrong");
+        showError(res.data.error || "Something went wrong");
       }
     } catch (err) {
-      alert("Server Error");
-      console.log(err);
+      // ⭐ Backend error handler (email exists, etc.)
+      if (err.response && err.response.data && err.response.data.error) {
+        showError(err.response.data.error);
+      } else {
+        showError("❌ Server Error — Try again later");
+      }
     } finally {
-      setLoading(false); // Hide loading spinner
+      setLoading(false);
     }
   };
 
   return (
     <div className="register-page">
+
+      {/* 🔥 Center Error Popup */}
+      {errorMsg && <div className="error-popup">{errorMsg}</div>}
 
       <div className="tamil-header">
         தமிழ்நாடு அரசு குழு 4 தேர்வு பயிற்சி தளம்

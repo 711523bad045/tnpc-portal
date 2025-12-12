@@ -38,11 +38,9 @@ function Sidebar() {
 
       </nav>
 
-      <div className="sidebar-footer">
-        <NavLink to="/logout" className="menu-item logout">
-          <LogOut size={18} /> <span>Logout</span>
-        </NavLink>
-      </div>
+      <div className="menu-item logout"onClick={() => {localStorage.removeItem("token"); window.location.replace("/login"); }}>
+            <LogOut size={18} /> <span>Logout</span>
+          </div>
     </div>
   );
 }
