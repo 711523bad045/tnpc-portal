@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import { useParams, useNavigate } from "react-router-dom";
@@ -7,6 +7,8 @@ import "./TakeTest.css";
 function TakeTest() {
   const { subject } = useParams();
   const navigate = useNavigate();
+  const resultsRef = useRef(null); // Reference for results section
+  
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
@@ -19,7 +21,6 @@ function TakeTest() {
   // LOAD QUESTIONS
   useEffect(() => {
     const token = localStorage.getItem("token");
-    
     if (!token) {
       setError("Please login to take the test");
       navigate("/login");
@@ -63,6 +64,21 @@ function TakeTest() {
     return () => clearInterval(timer);
   }, [timeLeft, submitted, questions.length]);
 
+  // AUTO SCROLL TO RESULTS AFTER SUBMISSION
+  useEffect(() => {
+    if (submitted && resultsRef.current) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ 
+          behavior: "smooth", 
+          block: "start" 
+        });
+        // Alternative: scroll to top of page
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 100);
+    }
+  }, [submitted]);
+
   // FORMAT TIMER
   const formatTimer = () => {
     const m = Math.floor(timeLeft / 60);
@@ -78,9 +94,8 @@ function TakeTest() {
   // SUBMIT TEST
   const handleSubmit = async () => {
     if (submitting) return; // Prevent double submission
-    
     setSubmitting(true);
-    
+
     // Calculate score
     let correct = 0;
     questions.forEach((q) => {
@@ -95,7 +110,6 @@ function TakeTest() {
     // SAVE RESULT IN DATABASE
     try {
       const token = localStorage.getItem("token");
-
       console.log("📤 Submitting test:", {
         subject,
         score: finalScore,
@@ -117,18 +131,17 @@ function TakeTest() {
       );
 
       console.log("✅ Test submitted successfully:", response.data);
-      
+
       // Show results after successful save
       setScore(finalScore);
       setSubmitted(true);
-      
     } catch (err) {
       console.error("❌ Error submitting test:", err.response?.data || err.message);
-      
+
       // Show results even if save failed, but warn user
       setScore(finalScore);
       setSubmitted(true);
-      
+
       const errorMsg = err.response?.data?.error || "Unknown error occurred";
       alert(`Test completed but failed to save results.\n\nError: ${errorMsg}\n\nYour score: ${finalScore}/${questions.length}\n\nPlease contact support or try taking the test again.`);
     } finally {
@@ -138,19 +151,15 @@ function TakeTest() {
 
   // Calculate progress
   const answeredCount = Object.keys(answers).length;
-  const progressPercentage = questions.length > 0 
-    ? Math.round((answeredCount / questions.length) * 100) 
-    : 0;
+  const progressPercentage =
+    questions.length > 0 ? Math.round((answeredCount / questions.length) * 100) : 0;
 
   if (loading) {
     return (
-      <div className="dashboard-layout">
+      <div className="dashboard-container">
         <Sidebar />
-        <div className="dashboard-container">
-          <div className="loading-container">
-            <div className="spinner"></div>
-            <p>Loading questions...</p>
-          </div>
+        <div className="main-content">
+          <div className="loading-container">Loading questions...</div>
         </div>
       </div>
     );
@@ -158,15 +167,12 @@ function TakeTest() {
 
   if (error && !questions.length) {
     return (
-      <div className="dashboard-layout">
+      <div className="dashboard-container">
         <Sidebar />
-        <div className="dashboard-container">
-          <div className="error-box">
-            <h2>⚠️ {error}</h2>
-            <button 
-              className="upload-btn" 
-              onClick={() => navigate("/daily-test")}
-            >
+        <div className="main-content">
+          <div className="error-container">
+            <div className="error-message">⚠️ {error}</div>
+            <button className="btn-primary" onClick={() => navigate("/daily-test")}>
               Back to Tests
             </button>
           </div>
@@ -176,32 +182,21 @@ function TakeTest() {
   }
 
   return (
-    <div className="dashboard-layout">
+    <div className="dashboard-container">
       <Sidebar />
-
-      <div className="dashboard-container">
-
+      <div className="main-content">
         {!submitted ? (
           <>
             <div className="test-header">
-              <div>
-                <h1 className="dashboard-title">
+              <div className="test-info">
+                <h2 className="test-title">
                   📝 {subject.charAt(0).toUpperCase() + subject.slice(1)} Test
-                </h1>
-                <p className="test-info">
+                </h2>
+                <p className="test-meta">
                   {questions.length} Questions • 5 Minutes
                 </p>
               </div>
-              
-              <div className="timer-box" style={{ 
-                color: timeLeft < 60 ? "#ef4444" : "#3b82f6",
-                fontWeight: "bold"
-              }}>
-                <span style={{ fontSize: "24px" }}>⏳</span>
-                <span style={{ fontSize: "32px", marginLeft: "10px" }}>
-                  {formatTimer()}
-                </span>
-              </div>
+              <div className="timer-box">⏳ {formatTimer()}</div>
             </div>
 
             {/* Progress Bar */}
@@ -211,40 +206,35 @@ function TakeTest() {
                 <span>{progressPercentage}%</span>
               </div>
               <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
+                <div
+                  className="progress-fill"
                   style={{ width: `${progressPercentage}%` }}
-                />
+                ></div>
               </div>
             </div>
 
             {/* Questions */}
             <div className="questions-container">
               {questions.map((q, index) => (
-                <div 
-                  key={q.id} 
-                  className={`question-card ${answers[q.id] ? 'answered' : ''}`}
-                >
+                <div key={q.id} className="question-card">
                   <div className="question-header">
                     <span className="question-number">Question {index + 1}</span>
                     {answers[q.id] && (
                       <span className="answered-badge">✓ Answered</span>
                     )}
                   </div>
-                  
                   <p className="question-text">{q.question}</p>
-
                   <div className="options-container">
                     {["A", "B", "C", "D"].map((opt) => (
-                      <label 
+                      <label
                         key={opt}
                         className={`option-label ${
-                          answers[q.id] === opt ? 'selected' : ''
+                          answers[q.id] === opt ? "selected" : ""
                         }`}
                       >
                         <input
                           type="radio"
-                          name={`q${q.id}`}
+                          name={`q-${q.id}`}
                           checked={answers[q.id] === opt}
                           onChange={() => chooseAnswer(q.id, opt)}
                         />
@@ -259,32 +249,37 @@ function TakeTest() {
               ))}
             </div>
 
-            <div className="submit-container">
-              <button 
-                className="submit-btn" 
-                onClick={handleSubmit}
-                disabled={submitting || answeredCount === 0}
-              >
-                {submitting ? "Submitting..." : "Submit Test"}
-              </button>
-              {answeredCount < questions.length && (
-                <p className="warning-text">
-                  ⚠️ You have {questions.length - answeredCount} unanswered question(s)
-                </p>
-              )}
-            </div>
+            <button
+              className="btn-submit"
+              onClick={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting ? "Submitting..." : "Submit Test"}
+            </button>
+
+            {answeredCount < questions.length && (
+              <div className="warning-message">
+                ⚠️ You have {questions.length - answeredCount} unanswered question(s)
+              </div>
+            )}
           </>
         ) : (
           // RESULT PAGE
-          <div className="result-container">
-            <div className="result-header">
-              <h1 className="result-title">
-                {score >= questions.length * 0.8 ? "🎉" : score >= questions.length * 0.5 ? "👍" : "📚"} 
-                Test Completed!
-              </h1>
-              
-              <div className="score-card">
-                <div className="score-big">
+          <div ref={resultsRef} className="results-container">
+            <div className="results-card">
+              <div className="results-header">
+                <div className="results-icon">
+                  {score >= questions.length * 0.8
+                    ? "🎉"
+                    : score >= questions.length * 0.5
+                    ? "👍"
+                    : "📚"}
+                </div>
+                <h2 className="results-title">Test Completed!</h2>
+              </div>
+
+              <div className="score-display">
+                <div className="score-number">
                   {score} / {questions.length}
                 </div>
                 <div className="score-percentage">
@@ -292,77 +287,71 @@ function TakeTest() {
                 </div>
               </div>
 
-              <div className="result-stats">
-                <div className="stat-item">
-                  <span className="stat-label">Time Taken</span>
-                  <span className="stat-value">
+              <div className="results-details">
+                <div className="detail-item">
+                  <span className="detail-label">Time Taken</span>
+                  <span className="detail-value">
                     {Math.floor((300 - timeLeft) / 60)}m {(300 - timeLeft) % 60}s
                   </span>
                 </div>
-                <div className="stat-item">
-                  <span className="stat-label">Subject</span>
-                  <span className="stat-value">
+                <div className="detail-item">
+                  <span className="detail-label">Subject</span>
+                  <span className="detail-value">
                     {subject.charAt(0).toUpperCase() + subject.slice(1)}
                   </span>
                 </div>
               </div>
             </div>
 
-            <h2 className="review-title">📘 Answer Review</h2>
-
-            <div className="review-container">
+            <div className="review-section">
+              <h3 className="review-title">📘 Answer Review</h3>
               {questions.map((q, index) => {
                 const userAnswer = answers[q.id];
                 const isCorrect = userAnswer === q.answer;
 
                 return (
-                  <div 
-                    key={q.id} 
-                    className={`review-card ${isCorrect ? 'correct' : 'incorrect'}`}
+                  <div
+                    key={q.id}
+                    className={`review-card ${isCorrect ? "correct" : "incorrect"}`}
                   >
                     <div className="review-header">
-                      <span className="review-number">Question {index + 1}</span>
-                      <span className={`review-badge ${isCorrect ? 'correct' : 'incorrect'}`}>
+                      <span className="review-question-number">
+                        Question {index + 1}
+                      </span>
+                      <span className={`review-badge ${isCorrect ? "correct" : "incorrect"}`}>
                         {isCorrect ? "✓ Correct" : "✗ Incorrect"}
                       </span>
                     </div>
 
                     <p className="review-question">{q.question}</p>
 
-                    <div className="review-answers">
-                      <div className="answer-row">
-                        <span className="answer-label">Your Answer:</span>
-                        <span className={`answer-value ${isCorrect ? 'correct' : 'incorrect'}`}>
-                          {userAnswer ? `${userAnswer}) ${q[`option_${userAnswer.toLowerCase()}`]}` : "Not answered"}
-                        </span>
-                      </div>
-                      
-                      {!isCorrect && (
-                        <div className="answer-row">
-                          <span className="answer-label">Correct Answer:</span>
-                          <span className="answer-value correct">
-                            {q.answer}) {q[`option_${q.answer.toLowerCase()}`]}
-                          </span>
-                        </div>
-                      )}
+                    <div className="review-answer">
+                      <strong>Your Answer:</strong>{" "}
+                      {userAnswer
+                        ? `${userAnswer}) ${q[`option_${userAnswer.toLowerCase()}`]}`
+                        : "Not answered"}
                     </div>
+
+                    {!isCorrect && (
+                      <div className="review-correct-answer">
+                        <strong>Correct Answer:</strong> {q.answer}){" "}
+                        {q[`option_${q.answer.toLowerCase()}`]}
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
 
-            <div className="result-actions">
-              <button 
-                className="btn-primary" 
-                onClick={() => navigate("/dashboard")}
-              >
+            <div className="results-actions">
+              <button className="btn-secondary" onClick={() => navigate("/dashboard")}>
                 View Dashboard
               </button>
-              <button 
-                className="btn-secondary" 
-                onClick={() => navigate("/daily-test")}
-              >
+              <button className="btn-secondary" onClick={() => navigate("/daily-test")}>
                 Take Another Test
+              </button>
+              <button className="btn-primary" onClick={() => navigate(-1)}>
+                ← Back
               </button>
             </div>
           </div>

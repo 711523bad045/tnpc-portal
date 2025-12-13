@@ -431,6 +431,236 @@
   color: #ef4444;
   margin-bottom: 24px;
 }
+.btn-submit {
+  width: 100%;
+  padding: 18px 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+  margin-bottom: 15px;
+}.btn-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+.btn-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Warning Message */
+.warning-message {
+  text-align: center;
+  padding: 15px;
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 10px;
+  color: #856404;
+  font-weight: 600;
+}
+
+/* Results Container */
+.results-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Results Card */
+.results-card {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.results-header {
+  margin-bottom: 30px;
+}
+
+.results-icon {
+  font-size: 80px;
+  margin-bottom: 15px;
+}
+
+.results-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
+}
+
+/* Score Display */
+.score-display {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  padding: 30px;
+  margin-bottom: 30px;
+  color: white;
+}
+
+.score-number {
+  font-size: 56px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.score-percentage {
+  font-size: 28px;
+  font-weight: 600;
+  opacity: 0.95;
+}
+
+/* Results Details */
+.results-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.detail-item {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+  border: 2px solid #ecf0f1;
+}
+
+.detail-label {
+  display: block;
+  font-size: 14px;
+  color: #7f8c8d;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  display: block;
+  font-size: 20px;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+/* Review Section */
+.review-section {
+  margin-bottom: 30px;
+}
+
+.review-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.review-card {
+  background: white;
+  border-radius: 15px;
+  padding: 25px 30px;
+  margin-bottom: 20px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  border-left: 5px solid #ecf0f1;
+}
+
+.review-card.correct {
+  border-left-color: #2ecc71;
+  background: linear-gradient(to right, #2ecc7110 0%, white 10%);
+}
+
+.review-card.incorrect {
+  border-left-color: #e74c3c;
+  background: linear-gradient(to right, #e74c3c10 0%, white 10%);
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.review-question-number {
+  font-size: 16px;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.review-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.review-badge.correct {
+  background: #2ecc71;
+  color: white;
+}
+
+.review-badge.incorrect {
+  background: #e74c3c;
+  color: white;
+}
+
+.review-question {
+  font-size: 17px;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.review-answer {
+  padding: 12px 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 15px;
+  color: #2c3e50;
+}
+
+.review-correct-answer {
+  padding: 12px 15px;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #155724;
+}
+
+/* Results Actions */
+.results-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Button Styles */
+.btn-primary,
+.btn-secondary {
+  padding: 15px 30px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {
