@@ -141,3 +141,25 @@
   height: 100%;
   border: none;
 }
+.bottom-back-btn {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  font-size: 15px;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.bottom-back-btn:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+

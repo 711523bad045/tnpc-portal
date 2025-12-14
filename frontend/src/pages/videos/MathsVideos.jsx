@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import { Play, User, Video } from "lucide-react";
+import { Play, User, Video, ArrowLeft } from "lucide-react";
 import "./MathsVideos.css";
 
 export default function MathVideos() {
-
   const [selectedVideo, setSelectedVideo] = useState(null);
 
   const videos = [
@@ -13,9 +12,18 @@ export default function MathVideos() {
     { id: "8idr1WZ1A7Q", title: "Statistics & Probability Basics", instructor: "Mrs. Diana", duration: "23:05" }
   ];
 
+  const handleBack = () => {
+    if (selectedVideo) {
+      setSelectedVideo(null);
+    } else {
+      window.history.back();
+    }
+  };
+
   return (
     <div className="tamil-wrapper">
 
+      {/* HERO */}
       <div className="tamil-hero">
         <Video className="hero-icon" />
         <h1>Math Video Classes</h1>
@@ -24,7 +32,7 @@ export default function MathVideos() {
 
       <div className="tamil-container">
 
-        {/* 🔥 VIDEO PLAYER (appears when clicked) */}
+        {/* VIDEO PLAYER */}
         {selectedVideo && (
           <div className="video-player-box">
             <iframe
@@ -46,7 +54,7 @@ export default function MathVideos() {
             <div
               key={i}
               className="tamil-card"
-              onClick={() => setSelectedVideo(v)} // <-- CLICK EVENT
+              onClick={() => setSelectedVideo(v)}
             >
               <div className="thumbnail">
                 <img
@@ -68,6 +76,13 @@ export default function MathVideos() {
         </div>
 
       </div>
+
+      {/* ✅ SIMPLE BACK BUTTON – BOTTOM LEFT */}
+      <button className="bottom-back-btn" onClick={handleBack}>
+        <ArrowLeft size={16} />
+        Back
+      </button>
+
     </div>
   );
 }
