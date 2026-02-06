@@ -24,18 +24,18 @@ function Dashboard() {
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [streak, setStreak] = useState(0);
 
+  const API = import.meta.env.VITE_API_URL; // <-- IMPORTANT
+
   const totalWeekMinutes = weeklyData.reduce((sum, d) => sum + d.minutes, 0);
   const avgDaily = (totalWeekMinutes / 7).toFixed(0);
   const todayMinutes = (secondsToday / 60).toFixed(0);
 
-  // Load all backend data once on mount
   useEffect(() => {
     loadWeeklyData();
     loadMonthlyData();
     loadStreak();
   }, []);
 
-  // Reload data periodically (every minute)
   useEffect(() => {
     if (secondsToday > 0 && secondsToday % 60 === 0) {
       loadWeeklyData();
@@ -44,40 +44,42 @@ function Dashboard() {
     }
   }, [secondsToday]);
 
-  const loadWeeklyData = () => {
+  const getAuthHeader = () => {
     const token = localStorage.getItem("token");
-    if (!token) return;
-
-    axios
-      .get("http://localhost:5000/api/study/weekly", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => setWeeklyData(res.data))
-      .catch((err) => console.error("❌ Load weekly error:", err));
+    return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
-  const loadMonthlyData = () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    axios
-      .get("http://localhost:5000/api/study/monthly", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => setMonthlyTotal(res.data.total || 0))
-      .catch((err) => console.error("❌ Load monthly error:", err));
+  const loadWeeklyData = async () => {
+    try {
+      const res = await axios.get(`${API}/study/weekly`, {
+        headers: getAuthHeader(),
+      });
+      setWeeklyData(res.data || DAYS.map((d) => ({ day: d, minutes: 0 })));
+    } catch (err) {
+      console.error("❌ Load weekly error:", err);
+    }
   };
 
-  const loadStreak = () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+  const loadMonthlyData = async () => {
+    try {
+      const res = await axios.get(`${API}/study/monthly`, {
+        headers: getAuthHeader(),
+      });
+      setMonthlyTotal(res.data?.total || 0);
+    } catch (err) {
+      console.error("❌ Load monthly error:", err);
+    }
+  };
 
-    axios
-      .get("http://localhost:5000/api/study/streak", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => setStreak(res.data.streak || 0))
-      .catch((err) => console.error("❌ Load streak error:", err));
+  const loadStreak = async () => {
+    try {
+      const res = await axios.get(`${API}/study/streak`, {
+        headers: getAuthHeader(),
+      });
+      setStreak(res.data?.streak || 0);
+    } catch (err) {
+      console.error("❌ Load streak error:", err);
+    }
   };
 
   const formatTime = (sec) => {

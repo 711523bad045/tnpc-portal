@@ -52,7 +52,7 @@ router.get("/today", auth, (req, res) => {
 });
 
 /* -----------------------------------------------------
-   MONTHLY TOTAL (return minutes)
+   MONTHLY TOTAL
 ----------------------------------------------------- */
 router.get("/monthly", auth, (req, res) => {
   const user_id = req.user.id;
@@ -79,7 +79,7 @@ router.get("/monthly", auth, (req, res) => {
 });
 
 /* -----------------------------------------------------
-   STUDY STREAK (counts consecutive days with >0 seconds)
+   STUDY STREAK
 ----------------------------------------------------- */
 router.get("/streak", auth, (req, res) => {
   const user_id = req.user.id;
@@ -143,7 +143,6 @@ router.get("/weekly", auth, (req, res) => {
     rows.forEach((row) => {
       const dayIndex = new Date(row.date).getDay();
       const idx = dayIndex === 0 ? 6 : dayIndex - 1;
-
       weekly[idx].minutes = (row.seconds || 0) / 60;
     });
 
@@ -152,9 +151,9 @@ router.get("/weekly", auth, (req, res) => {
 });
 
 /* -----------------------------------------------------
-   YEARLY (Past 365 days)
+   ✅ NEW: HEATMAP ROUTE (THIS FIXES YOUR ERROR)
 ----------------------------------------------------- */
-router.get("/yearly", auth, (req, res) => {
+router.get("/heatmap", auth, (req, res) => {
   const user_id = req.user.id;
 
   const sql = `
@@ -167,16 +166,16 @@ router.get("/yearly", auth, (req, res) => {
 
   db.query(sql, [user_id], (err, rows) => {
     if (err) {
-      console.error("DB error /yearly:", err);
+      console.error("DB error /heatmap:", err);
       return res.status(500).json({ error: "DB error" });
     }
 
     const map = {};
-    rows.forEach((r) => {
+    rows.forEach(r => {
       map[r.date] = (r.seconds || 0) / 60;
     });
 
-    const out = [];
+    const result = [];
     const today = new Date();
 
     for (let i = 364; i >= 0; i--) {
@@ -184,13 +183,13 @@ router.get("/yearly", auth, (req, res) => {
       d.setDate(today.getDate() - i);
       const iso = d.toISOString().split("T")[0];
 
-      out.push({
+      result.push({
         date: iso,
-        minutes: map[iso] || 0,
+        minutes: map[iso] || 0
       });
     }
 
-    res.json(out);
+    res.json(result);
   });
 });
 

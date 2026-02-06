@@ -13,30 +13,43 @@ function AdminQuestionUpload() {
 
   const [loading, setLoading] = useState(false);
 
+  const API = import.meta.env.VITE_API_URL; // <-- IMPORTANT
+
   const handleUpload = async (subject) => {
     if (!inputs[subject].trim()) {
       alert("❌ Please paste questions before uploading.");
       return;
     }
 
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("❌ Please login as admin first.");
+      return;
+    }
+
     try {
       setLoading(true);
 
-      // ⭐ FIXED ENDPOINT
       const res = await axios.post(
-        `http://localhost:5000/api/text-upload/upload/${subject}`,
-        { text: inputs[subject] }
+        `${API}/text-upload/upload/${subject}`,
+        { text: inputs[subject] },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
 
-      alert(`✅ ${subject.toUpperCase()} uploaded!\nTotal: ${res.data.count} questions`);
+      alert(
+        `✅ ${subject.toUpperCase()} uploaded!\nTotal: ${res.data.count} questions`
+      );
 
       setInputs({ ...inputs, [subject]: "" });
-    } 
-    catch (err) {
-      console.error(err);
-      alert("❌ Upload failed — check format or backend.");
-    }
-    finally {
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert(
+        err.response?.data?.error ||
+          "❌ Upload failed — check format or backend."
+      );
+    } finally {
       setLoading(false);
     }
   };
@@ -60,7 +73,7 @@ function AdminQuestionUpload() {
               }
             />
 
-            <button 
+            <button
               disabled={loading}
               onClick={() => handleUpload(subj)}
               className="upload-btn"

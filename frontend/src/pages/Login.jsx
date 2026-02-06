@@ -7,24 +7,23 @@ function Login() {
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(""); // ⭐ For validation popup
+  const [errorMsg, setErrorMsg] = useState("");
 
   const [form, setForm] = useState({
     email: "",
     password: ""
   });
 
+  const API = import.meta.env.VITE_API_URL; // <-- VERY IMPORTANT
+
   const showError = (msg) => {
     setErrorMsg(msg);
-
-    // Auto-hide after 3 seconds
     setTimeout(() => setErrorMsg(""), 3000);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ⭐ Frontend validation
     if (!form.email.trim() || !form.password.trim()) {
       showError("⚠️ Please enter both email and password");
       return;
@@ -32,7 +31,7 @@ function Login() {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        `${API}/auth/login`,
         form
       );
 
@@ -43,8 +42,7 @@ function Login() {
         showError(res.data.error || "❌ Invalid Credentials");
       }
     } catch (error) {
-      // ⭐ Backend error handler (User not exist, wrong password, etc.)
-      if (error.response && error.response.data && error.response.data.error) {
+      if (error.response?.data?.error) {
         showError(error.response.data.error);
       } else {
         showError("❌ Server Error — Try again later");
@@ -55,14 +53,8 @@ function Login() {
   return (
     <div className="login-page">
 
-      {/* 🔥 Center Popup Error Message */}
-      {errorMsg && (
-        <div className="error-popup">
-          {errorMsg}
-        </div>
-      )}
+      {errorMsg && <div className="error-popup">{errorMsg}</div>}
 
-      {/* 🔥 Tamil Title */}
       <div className="tamil-header">
         தமிழ்நாடு அரசு குழு 4 தேர்வு பயிற்சி தளம்
       </div>
@@ -78,7 +70,6 @@ function Login() {
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
 
-          {/* Password + eye icon */}
           <div className="password-wrapper">
             <input
               type={showPassword ? "text" : "password"}

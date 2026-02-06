@@ -8,7 +8,7 @@ function Register() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(""); // ⭐ Popup error message
+  const [errorMsg, setErrorMsg] = useState("");
 
   const [form, setForm] = useState({
     name: "",
@@ -16,15 +16,16 @@ function Register() {
     password: ""
   });
 
+  const API = import.meta.env.VITE_API_URL; // <-- VERY IMPORTANT
+
   const showError = (msg) => {
     setErrorMsg(msg);
-    setTimeout(() => setErrorMsg(""), 3000); // auto-clear
+    setTimeout(() => setErrorMsg(""), 3000);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ⭐ BASIC VALIDATION
     if (!form.name.trim() || !form.email.trim() || !form.password.trim()) {
       showError("⚠️ Please fill all fields");
       return;
@@ -39,14 +40,13 @@ function Register() {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/register",
+        `${API}/auth/register`,
         form
       );
 
       if (res.data.message === "User registered successfully") {
-        // ⭐ After register → Auto login
         const loginRes = await axios.post(
-          "http://localhost:5000/api/auth/login",
+          `${API}/auth/login`,
           {
             email: form.email,
             password: form.password
@@ -61,8 +61,7 @@ function Register() {
         showError(res.data.error || "Something went wrong");
       }
     } catch (err) {
-      // ⭐ Backend error handler (email exists, etc.)
-      if (err.response && err.response.data && err.response.data.error) {
+      if (err.response?.data?.error) {
         showError(err.response.data.error);
       } else {
         showError("❌ Server Error — Try again later");
@@ -75,7 +74,6 @@ function Register() {
   return (
     <div className="register-page">
 
-      {/* 🔥 Center Error Popup */}
       {errorMsg && <div className="error-popup">{errorMsg}</div>}
 
       <div className="tamil-header">

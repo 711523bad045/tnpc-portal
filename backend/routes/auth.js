@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 const router = express.Router();
 
-// 🚀 Register
+
 router.post("/register", (req, res) => {
   const { name, email, password } = req.body;
 
@@ -33,7 +33,7 @@ router.post("/register", (req, res) => {
   });
 });
 
-// 🔐 Login
+
 router.post("/login", (req, res) => {
   const { email, password } = req.body;
 
