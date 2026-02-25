@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import API from "../api/axios";
 import Sidebar from "../components/Sidebar";
 import { useParams } from "react-router-dom";
 
@@ -13,8 +13,8 @@ function TakeTest() {
 
   // LOAD QUESTIONS
   useEffect(() => {
-    axios
-      .get(`http://localhost:5000/api/test-questions/${subject}`)
+    API
+      .get(`/test-questions/${subject}`)
       .then((res) => setQuestions(res.data))
       .catch(() => setQuestions([]));
   }, [subject]);
@@ -61,7 +61,7 @@ function TakeTest() {
     setSubmitted(true);
 
     // SAVE RESULT IN BACKEND
-    axios.post("http://localhost:5000/api/test-submit/submit", {
+    API.post("/test-submit/submit", {
       userId: 1, // replace with logged-in user ID
       subject,
       score: correct,

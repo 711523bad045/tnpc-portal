@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import API from "../api/axios";
 import Sidebar from "../components/Sidebar";
 import { useParams } from "react-router-dom";
 import "./QuestionBank.css";
@@ -9,8 +9,8 @@ function SubjectQuestions() {
   const [questions, setQuestions] = useState([]);
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:5000/api/question-bank/${subject}`)
+    API
+      .get(`/question-bank/${subject}`)
       .then((res) => setQuestions(res.data))
       .catch((err) => {
         console.error(err);

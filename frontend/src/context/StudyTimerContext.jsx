@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import axios from "axios";
-
+import API from "../api/axios";
 const StudyTimerContext = createContext();
 export const useStudyTimer = () => useContext(StudyTimerContext);
 
@@ -41,13 +40,13 @@ export function StudyTimerProvider({ children }) {
 
       // If user changed, reload data
       if (userId !== currentUserId) {
-        console.log("👤 User changed, loading new data for user:", userId);
+        console.log(" User changed, loading new data for user:", userId);
         setCurrentUserId(userId);
         setIsLoaded(false); // Trigger reload
         loadTodayData(token);
       }
     } catch (err) {
-      console.error("❌ Invalid token format:", err);
+      console.error(" Invalid token format:", err);
       setSecondsToday(0);
       setIsLoaded(true);
     }
@@ -73,8 +72,7 @@ export function StudyTimerProvider({ children }) {
   // Load today's SECONDS from backend
   // -----------------------------------------------------
   const loadTodayData = (token) => {
-    axios
-      .get("http://localhost:5000/api/study/today", {
+      API.get("/study/today", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -104,8 +102,8 @@ export function StudyTimerProvider({ children }) {
     }
 
     try {
-      await axios.post(
-        "http://localhost:5000/api/study/update",
+      await API.post(
+  "/study/update",
         { seconds: currentSeconds },
         { headers: { Authorization: `Bearer ${token}` } }
       );

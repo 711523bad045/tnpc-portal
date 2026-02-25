@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
+import API from "../api/axios";
 import {
   ResponsiveContainer,
   BarChart,
@@ -62,7 +62,7 @@ function Dashboard() {
     if (!token) return;
 
     axios
-      .get("http://localhost:5000/api/study/today", {
+      API.get("/study/today", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -78,7 +78,7 @@ function Dashboard() {
   const loadWeeklyData = () => {
     const token = localStorage.getItem("token");
     axios
-      .get("http://localhost:5000/api/study/weekly", {
+      API.get("/study/weekly", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setWeeklyData(res.data))
@@ -123,8 +123,8 @@ function Dashboard() {
     const minutes = Number((secondsToday / 60).toFixed(2));
 
     try {
-      await axios.post(
-        "http://localhost:5000/api/study/update",
+      await API.post(
+        "/study/update",
         { minutes },
         { headers: { Authorization: `Bearer ${token}` } }
       );

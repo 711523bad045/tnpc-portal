@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
-import axios from "axios";
+import API from "../api/axios";
 import "./AdminUpload.css";
 
 function AdminQuestionUpload() {
@@ -23,8 +23,8 @@ function AdminQuestionUpload() {
       setLoading(true);
 
       // ⭐ FIXED ENDPOINT
-      const res = await axios.post(
-        `http://localhost:5000/api/text-upload/upload/${subject}`,
+      const res = await API.post(
+  `/text-upload/upload/${subject}`,
         { text: inputs[subject] }
       );
 
