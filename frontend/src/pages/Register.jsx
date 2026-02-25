@@ -16,7 +16,8 @@ function Register() {
     password: ""
   });
 
-  const API = import.meta.env.VITE_API_URL; // <-- VERY IMPORTANT
+  // ✅ Correct API base URL (must end with /api)
+  const API = import.meta.env.VITE_API_URL;
 
   const showError = (msg) => {
     setErrorMsg(msg);
@@ -39,12 +40,14 @@ function Register() {
     setLoading(true);
 
     try {
+      // ✅ CORRECT REGISTER ENDPOINT
       const res = await axios.post(
         `${API}/auth/register`,
         form
       );
 
       if (res.data.message === "User registered successfully") {
+        // Auto-login after register
         const loginRes = await axios.post(
           `${API}/auth/login`,
           {
@@ -56,11 +59,15 @@ function Register() {
         if (loginRes.data.token) {
           localStorage.setItem("token", loginRes.data.token);
           navigate("/dashboard");
+        } else {
+          showError("Login failed after register");
         }
       } else {
         showError(res.data.error || "Something went wrong");
       }
     } catch (err) {
+      console.error("Register error:", err);
+
       if (err.response?.data?.error) {
         showError(err.response.data.error);
       } else {

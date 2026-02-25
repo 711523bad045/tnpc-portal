@@ -11,20 +11,21 @@ function TakeTest() {
 
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
+  const [timeLeft, setTimeLeft] = useState(300);
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const API = import.meta.env.VITE_API_URL; // <-- VERY IMPORTANT
+  const API = import.meta.env.VITE_API_URL;
 
   // =========================
   // LOAD QUESTIONS (FIXED)
   // =========================
   useEffect(() => {
     const token = localStorage.getItem("token");
+
     if (!token) {
       setError("Please login to take the test");
       navigate("/login");
@@ -34,7 +35,8 @@ function TakeTest() {
     setLoading(true);
 
     axios
-      .get(`${API}/api/test-questions/${subject}`, {
+      // ✅ FIXED (removed extra /api)
+      .get(`${API}/test-questions/${subject}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -71,7 +73,6 @@ function TakeTest() {
     return () => clearInterval(timer);
   }, [timeLeft, submitted, questions.length]);
 
-  // Scroll to results after submit
   useEffect(() => {
     if (submitted && resultsRef.current) {
       setTimeout(() => {
@@ -117,24 +118,21 @@ function TakeTest() {
         timeTaken,
       };
 
-      const response = await axios.post(
-        `${API}/api/test/submit`,
+      // ✅ FIXED (removed extra /api)
+      await axios.post(
+        `${API}/test/submit`,
         payload,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      console.log("✅ Submitted:", response.data);
-
       setScore(finalScore);
       setSubmitted(true);
     } catch (err) {
       console.error("❌ Submit error:", err);
-
       setScore(finalScore);
       setSubmitted(true);
-
       alert(
         `Test finished but result may not be saved.\nYour score: ${finalScore}/${questions.length}`
       );
@@ -186,110 +184,38 @@ function TakeTest() {
         {!submitted ? (
           <>
             <div className="test-header">
-              <div className="test-info">
-                <h2 className="test-title">
-                  📝{" "}
-                  {subject.charAt(0).toUpperCase() + subject.slice(1)} Test
-                </h2>
-                <p className="test-meta">
-                  {questions.length} Questions • 5 Minutes
-                </p>
-              </div>
+              <h2>
+                📝 {subject.charAt(0).toUpperCase() + subject.slice(1)} Test
+              </h2>
               <div className="timer-box">⏳ {formatTimer()}</div>
             </div>
 
-            <div className="progress-container">
-              <div className="progress-info">
-                <span>
-                  Progress: {answeredCount} / {questions.length}
-                </span>
-                <span>{progressPercentage}%</span>
+            {questions.map((q, index) => (
+              <div key={q.id} className="question-card">
+                <p><strong>Q{index + 1}:</strong> {q.question}</p>
+
+                {["A", "B", "C", "D"].map((opt) => (
+                  <label key={opt}>
+                    <input
+                      type="radio"
+                      name={`q-${q.id}`}
+                      checked={answers[q.id] === opt}
+                      onChange={() => chooseAnswer(q.id, opt)}
+                    />
+                    {opt}) {q[`option_${opt.toLowerCase()}`]}
+                  </label>
+                ))}
               </div>
-              <div className="progress-bar">
-                <div
-                  className="progress-fill"
-                  style={{ width: `${progressPercentage}%` }}
-                ></div>
-              </div>
-            </div>
+            ))}
 
-            <div className="questions-container">
-              {questions.map((q, index) => (
-                <div key={q.id} className="question-card">
-                  <div className="question-header">
-                    <span className="question-number">
-                      Question {index + 1}
-                    </span>
-                    {answers[q.id] && (
-                      <span className="answered-badge">✓ Answered</span>
-                    )}
-                  </div>
-
-                  <p className="question-text">{q.question}</p>
-
-                  <div className="options-container">
-                    {["A", "B", "C", "D"].map((opt) => (
-                      <label
-                        key={opt}
-                        className={`option-label ${
-                          answers[q.id] === opt ? "selected" : ""
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name={`q-${q.id}`}
-                          checked={answers[q.id] === opt}
-                          onChange={() => chooseAnswer(q.id, opt)}
-                        />
-                        <span className="option-letter">{opt}</span>
-                        <span className="option-text">
-                          {q[`option_${opt.toLowerCase()}`]}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              className="btn-submit"
-              onClick={handleSubmit}
-              disabled={submitting}
-            >
+            <button onClick={handleSubmit} disabled={submitting}>
               {submitting ? "Submitting..." : "Submit Test"}
             </button>
-
-            {answeredCount < questions.length && (
-              <div className="warning-message">
-                ⚠️ You have{" "}
-                {questions.length - answeredCount} unanswered question(s)
-              </div>
-            )}
           </>
         ) : (
-          <div ref={resultsRef} className="results-container">
-            <div className="results-card">
-              <h2>Test Completed!</h2>
-              <div className="score-number">
-                {score} / {questions.length}
-              </div>
-            </div>
-
-            <div className="results-actions">
-              <button
-                className="btn-secondary"
-                onClick={() => navigate("/dashboard")}
-              >
-                View Dashboard
-              </button>
-              <button
-                className="btn-secondary"
-                onClick={() => navigate("/daily-test")}
-              >
-                Take Another Test
-              </button>
-            </div>
+          <div ref={resultsRef}>
+            <h2>Test Completed!</h2>
+            <h3>{score} / {questions.length}</h3>
           </div>
         )}
       </div>

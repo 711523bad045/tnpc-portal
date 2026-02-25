@@ -7,11 +7,13 @@ import "./QuestionBank.css";
 function SubjectQuestions() {
   const { subject } = useParams();
   const navigate = useNavigate();
+
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API = import.meta.env.VITE_API_URL; // <-- IMPORTANT
+  // ✅ Base API URL from .env.local or .env.production
+  const API = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -25,8 +27,11 @@ function SubjectQuestions() {
     setLoading(true);
 
     axios
-      .get(`${API}/api/question-bank/${subject}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      // ✅ FIXED (removed extra /api)
+      .get(`${API}/question-bank/${subject}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
       .then((res) => {
         setQuestions(res.data || []);
@@ -37,7 +42,9 @@ function SubjectQuestions() {
         setError("Failed to load questions");
         setQuestions([]);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+      });
   }, [subject, navigate, API]);
 
   if (loading) {
@@ -83,12 +90,14 @@ function SubjectQuestions() {
                 <p>
                   <strong>Q:</strong> {q.question}
                 </p>
+
                 <ul>
                   <li>A) {q.option_a}</li>
                   <li>B) {q.option_b}</li>
                   <li>C) {q.option_c}</li>
                   <li>D) {q.option_d}</li>
                 </ul>
+
                 <p>
                   <strong>Answer:</strong> {q.answer}
                 </p>
