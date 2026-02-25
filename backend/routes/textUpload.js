@@ -2,9 +2,21 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 
-// REGEX
+// ===============================
+// REGEX TO CAPTURE FULL MCQ BLOCK
+// ===============================
+// Format Required:
+//
+// 1. Question text
+// A) Option A
+// B) Option B
+// C) Option C
+// D) Option D
+// Correct Answer: B)
+// ===============================
+
 const mcqPattern =
-/(\d+)\.\s*(.*?)\s*A\)\s*(.*?)\s*B\)\s*(.*?)\s*C\)\s*(.*?)\s*D\)\s*(.*?)(?=\n\d+\.|\s*$)/gs;
+/(\d+)\.\s*(.*?)\s*A\)\s*(.*?)\s*B\)\s*(.*?)\s*C\)\s*(.*?)\s*D\)\s*(.*?)\s*Correct Answer:\s*([A-D])\)/gs;
 
 const tables = {
   tamil: "tamil_questions",
@@ -20,8 +32,9 @@ router.post("/upload/:subject", (req, res) => {
   if (!tables[subject]) {
     return res.status(400).json({ error: "Invalid subject" });
   }
-  if (!text || text.trim().length < 3) {
-    return res.status(400).json({ error: "Empty text" });
+
+  if (!text || text.trim().length < 5) {
+    return res.status(400).json({ error: "Empty or invalid text" });
   }
 
   const table = tables[subject];
@@ -31,15 +44,20 @@ router.post("/upload/:subject", (req, res) => {
 
   function insertNext() {
     match = mcqPattern.exec(text);
+
     if (!match) {
-      return res.json({ message: "Uploaded successfully", count });
+      return res.json({
+        message: "✅ Uploaded successfully",
+        totalInserted: count
+      });
     }
 
     const question = match[2].trim();
-    const a = match[3].trim();
-    const b = match[4].trim();
-    const c = match[5].trim();
-    const d = match[6].trim();
+    const optionA = match[3].trim();
+    const optionB = match[4].trim();
+    const optionC = match[5].trim();
+    const optionD = match[6].trim();
+    const correctAnswer = match[7].trim().toUpperCase();
 
     const sql = `
       INSERT INTO ${table}
@@ -47,15 +65,19 @@ router.post("/upload/:subject", (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?)
     `;
 
-    db.query(sql, [question, a, b, c, d, "A"], (err) => {
-      if (err) {
-        console.error("UPLOAD ERROR:", err);
-        return res.status(500).json({ error: "Database insert error" });
-      }
+    db.query(
+      sql,
+      [question, optionA, optionB, optionC, optionD, correctAnswer],
+      (err) => {
+        if (err) {
+          console.error("❌ Upload DB Error:", err);
+          return res.status(500).json({ error: "Database insert error" });
+        }
 
-      count++;
-      insertNext(); // continue inserting
-    });
+        count++;
+        insertNext(); // continue next question
+      }
+    );
   }
 
   insertNext();
