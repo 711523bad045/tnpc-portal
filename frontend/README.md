@@ -19,3 +19,5 @@ If you are developing a production application, we recommend using TypeScript wi
 # tnpc-portal
 Learning portal for TNPC exam questions and videos
 >>>>>>> f83fca96b90a46efd3dc4734f4877b35109030d9
+ 
+ VITE_API_URL=https://tnpc-portal-1.onrender.com/api
